@@ -103,6 +103,17 @@ class microNMEA:
         self.geoidal_separation = None
         self.gsv_part = dict()
 
+    @staticmethod
+    def catch_err(func):
+        def inner(*args, **kwargs):
+            try:
+                val = func(*args, **kwargs)
+                return val
+            except Exception as e:
+                print(f"ERR {func.__name__}: {e}")
+        return inner
+
+    @catch_err
     def parse(self, raw_sentence: str) -> None:
         sentence_type = raw_sentence[3:6]
         sentence, expected_crc = raw_sentence.split(self.SEN_CRC)
@@ -116,6 +127,7 @@ class microNMEA:
         else:
             print(f"Incorrect CRC for {sentence_type}")
 
+    @catch_err
     def crc_check(self, message: str, expected_crc: str) -> bool:
         if not self.crc:
             return True
@@ -124,6 +136,7 @@ class microNMEA:
             crc ^= ord(__char)
         return format(crc, "02x") == expected_crc.lower()
 
+    @catch_err
     def get_lat(self, lat: str, lns: str) -> None:
         if lat and lns and lns in self.HEMISPHERES:
             la_deg = int(lat[:3])
@@ -132,6 +145,7 @@ class microNMEA:
             self.lat = round(decimal_degrees, 8)
             self.lat_ns = lns
 
+    @catch_err
     def get_lon(self, lon: str, lew: str) -> None:
         if lon and lew and lew in self.HEMISPHERES:
             lo_deg = int(lon[:4])
@@ -140,50 +154,77 @@ class microNMEA:
             self.lon = round(decimal_degrees, 8)
             self.lon_ew = lew
 
+    @catch_err
     def get_quality(self, field: str) -> None:
         if field and int(field) in range(len(self.QUALITY)):
             self.quality = self.QUALITY[int(field)]
 
+    @catch_err
     def get_satellites_used(self, field: str) -> None:
         if field:
             self.number_of_satellites_used = int(field)
 
+    @catch_err
     def get_satellites_used_list(self, gnss_id: str, satellites: list) -> None:
         if gnss_id and int(gnss_id) in self.GNSS_IDS and satellites:
             self.satellites_used[self.GNSS_IDS[int(gnss_id)]["system"]] = satellites
 
+    @catch_err
     def get_pdop(self, field: str) -> None:
         if field and 0 < float(field) < 100:
             self.pdop = float(field)
 
+    @catch_err
     def get_hdop(self, field: str) -> None:
         if field and 0 < float(field) < 100:
             self.hdop = float(field)
 
+    @catch_err
     def get_vdop(self, field: str) -> None:
         if field and 0 < float(field) < 100:
             self.vdop = float(field)
 
+    @catch_err
     def get_alt(self, field: str) -> None:
         if field:
             self.alt = float(field)
 
+    @catch_err
     def get_dgps_station_id(self, field: str) -> None:
         if field:
             self.dgps_station_id = int(field)
 
+    @catch_err
     def get_dgps_age(self, field: str) -> None:
         if field:
             self.dgps_age = field
 
+    @catch_err
     def get_geoidal_separation(self, field: str) -> None:
         if field:
             self.geoidal_separation = float(field)
 
+    @catch_err
     def get_time(self, field: str) -> None:
         if field:
             self.time = f"{field[:2]}:{field[2:4]}:{field[4:]}"
 
+    @catch_err
+    def get_elevation(self, field: str) -> int:
+        if field and int(field) in range(0, 90 + 1):
+            return int(field)
+
+    @catch_err
+    def get_azimuth(self, field: str) -> int:
+        if field and int(field) in range(0, 359 + 1):
+            return int(field)
+
+    @catch_err
+    def get_snr(self, field: str) -> int:
+        if field and int(field) in range(0, 99 + 1):
+            return int(field)
+
+    @catch_err
     def gga(self) -> None:
         self.get_time(self.fields[1])
         self.get_lat(self.fields[2], self.fields[3])
@@ -196,6 +237,7 @@ class microNMEA:
         self.get_dgps_age(self.fields[13])
         self.get_dgps_station_id(self.fields[14])
 
+    @catch_err
     def gll(self) -> None:
         if self.fields[6] == self.VALID:
             self.get_lat(self.fields[1], self.fields[2])
@@ -203,24 +245,14 @@ class microNMEA:
             self.get_time(self.fields[5])
             self.mode = self.MODES.get(self.fields[7])
 
+    @catch_err
     def gsa(self) -> None:
         self.get_satellites_used_list(self.fields[18], self.fields[3:15])
         self.get_pdop(self.fields[15])
         self.get_hdop(self.fields[16])
         self.get_vdop(self.fields[17])
 
-    def get_elevation(self, field: str) -> int:
-        if field and int(field) in range(0, 90 + 1):
-            return int(field)
-
-    def get_azimuth(self, field: str) -> int:
-        if field and int(field) in range(0, 359 + 1):
-            return int(field)
-
-    def get_snr(self, field: str) -> int:
-        if field and int(field) in range(0, 99 + 1):
-            return int(field)
-
+    @catch_err
     def gsv(self) -> None:
         """
         GSV sentence may be part of bigger message. This means all sentences of the
@@ -248,7 +280,6 @@ class microNMEA:
                         # print(offset)
                         # print(satellite_id, elev, azim, snr)
                         # self.gsv_part[talker].update({"satellites": {}})
-
 
     def __repr__(self) -> str:
         return (f"Time: {self.time}\n"
