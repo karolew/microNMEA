@@ -48,7 +48,7 @@ class microNMEA:
                                                          "5": "E6-BC",
                                                          "6": "L1-A",
                                                          "7": "L1-BC"}},
-        4: {"system": "BDS", "talker": "BD", "signals": {
+        4: {"system": "BDS", "talker": "GB", "signals": {
                                                          "0": "All signals",
                                                          "1": "B1",
                                                          "5": "B2A",
@@ -101,6 +101,7 @@ class microNMEA:
         self.dgps_station_id = None
         self.dgps_age = None
         self.geoidal_separation = None
+        self.gsv_part = dict()
 
     def parse(self, raw_sentence: str) -> None:
         sentence_type = raw_sentence[3:6]
@@ -121,7 +122,7 @@ class microNMEA:
         crc = 0
         for __char in message[1:]:
             crc ^= ord(__char)
-        return format(crc, "02x") == expected_crc
+        return format(crc, "02x") == expected_crc.lower()
 
     def get_lat(self, lat: str, lns: str) -> None:
         if lat and lns and lns in self.HEMISPHERES:
@@ -204,9 +205,50 @@ class microNMEA:
 
     def gsa(self) -> None:
         self.get_satellites_used_list(self.fields[18], self.fields[3:15])
-        self.get_pdop(self.fields[16])
+        self.get_pdop(self.fields[15])
         self.get_hdop(self.fields[16])
-        self.get_vdop(self.fields[16])
+        self.get_vdop(self.fields[17])
+
+    def get_elevation(self, field: str) -> int:
+        if field and int(field) in range(0, 90 + 1):
+            return int(field)
+
+    def get_azimuth(self, field: str) -> int:
+        if field and int(field) in range(0, 359 + 1):
+            return int(field)
+
+    def get_snr(self, field: str) -> int:
+        if field and int(field) in range(0, 99 + 1):
+            return int(field)
+
+    def gsv(self) -> None:
+        """
+        GSV sentence may be part of bigger message. This means all sentences of the
+        message must be read to get correct content.
+        """
+        # Check GNSS is supported.
+        talker = self.fields[0][1:3]
+        if not any(talker in x["talker"] for x in self.GNSS_IDS.values()):
+            print("ERROR talker", talker)
+            return
+        if self.fields[1] and self.fields[2]:
+            number_of_messages = int(self.fields[1])
+            sequencer_number = int(self.fields[2])
+            if self.fields[3]:
+                if talker not in self.gsv_part:
+                    self.gsv_part[talker] = dict()
+                self.gsv_part[talker].update({"satellites_in_view": int(self.fields[3])})
+                if len(self.fields) == 5:
+                    # Nothing else to update.
+                    return
+                else:
+                    for offset in range(3, len(self.fields[4:]), 4):
+                        satellite_id, elev, azim, snr = self.fields[offset:offset+4]
+                        # TODO
+                        # print(offset)
+                        # print(satellite_id, elev, azim, snr)
+                        # self.gsv_part[talker].update({"satellites": {}})
+
 
     def __repr__(self) -> str:
         return (f"Time: {self.time}\n"
@@ -224,19 +266,3 @@ class microNMEA:
                 f"HDOP: {self.hdop}\n"
                 f"VDOP: {self.vdop}\n"
                 )
-
-
-if __name__ == "__main__":
-    mn = microNMEA()
-
-    mn.parse("$GPGGA,215230.000,5146.7965950,N,01925.3586740,E,1,19,0.7,225.278,M,36.900,M,,0000*53")
-    print(mn)
-
-    mn.parse("$GNGLL,5146.7965950,N,01925.3586740,E,215230.000,A,A*43")
-    print(mn)
-
-    mn.parse("$GNGSA,A,3,06,11,16,21,22,,,,,,,,1.2,0.7,1.0,4*33")
-    mn.parse("$GNGSA,A,3,01,02,03,04,17,19,32,,,,,,1.2,0.7,1.0,1*3F")
-    mn.parse("$GNGSA,A,3,67,68,69,84,,,,,,,,,1.2,0.7,1.0,2*3B")
-    mn.parse("$GNGSA,A,3,05,13,15,,,,,,,,,,1.2,0.7,1.0,3*35")
-    print(mn)
