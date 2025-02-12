@@ -9,14 +9,14 @@ The following documents were used as a source of NMEA information:
 
 # Usage
 
-* Copy the `microNMEA.py` to your project.
+* Copy the `MicroNMEA.py` to your project.
 * Instantiate microNMEA class.
 * Call `parse` method with full NMEA sentence as argument.
 * Processed data available via class attributes.
  
 Example:
 ```python 
-nmea = microNMEA()
+nmea = MicroNMEA()
 nmea.parse("$GNGSA,A,3,67,68,69,84,,,,,,,,,1.2,0.7,1.0,2*3B")
 ```
 

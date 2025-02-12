@@ -1,5 +1,5 @@
 
-class microNMEA:
+class MicroNMEA:
 
     QUALITY = (
         "Fix Unavailable",
@@ -79,6 +79,7 @@ class microNMEA:
     )
 
     SEN_START = "$"
+    SEN_SEPARATOR = ","
     SEN_CRC = "*"
     VALID = "A"
 
@@ -101,7 +102,8 @@ class microNMEA:
         self.dgps_station_id = None
         self.dgps_age = None
         self.geoidal_separation = None
-        self.gsv_part = dict()
+        self.__tmp_gsv_part = dict()
+        self.gsv_data = dict()
 
     @staticmethod
     def catch_err(func):
@@ -119,7 +121,7 @@ class microNMEA:
         sentence, expected_crc = raw_sentence.split(self.SEN_CRC)
         if self.crc_check(sentence, expected_crc):
             __call = getattr(self, sentence_type.lower(), None)
-            self.fields = sentence.split(",")
+            self.fields = sentence.split(self.SEN_SEPARATOR)
             if __call:
                 __call()
             else:
@@ -260,26 +262,33 @@ class microNMEA:
         """
         # Check GNSS is supported.
         talker = self.fields[0][1:3]
+
         if not any(talker in x["talker"] for x in self.GNSS_IDS.values()):
-            print("ERROR talker", talker)
+            # Talker incorrect or not supported.
             return
+
         if self.fields[1] and self.fields[2]:
             number_of_messages = int(self.fields[1])
-            sequencer_number = int(self.fields[2])
+            sentence_number = int(self.fields[2])
             if self.fields[3]:
-                if talker not in self.gsv_part:
-                    self.gsv_part[talker] = dict()
-                self.gsv_part[talker].update({"satellites_in_view": int(self.fields[3])})
-                if len(self.fields) == 5:
+                if talker not in self.__tmp_gsv_part:
+                    self.__tmp_gsv_part[talker] = {"satellites_in_view": 0, "satellites": dict()}
+                self.__tmp_gsv_part[talker]["satellites_in_view"] = int(self.fields[3])
+                if len(self.fields) <= 5:
                     # Nothing else to update.
                     return
                 else:
-                    for offset in range(3, len(self.fields[4:]), 4):
+                    for offset in range(4, len(self.fields[4:]), 4):
                         satellite_id, elev, azim, snr = self.fields[offset:offset+4]
-                        # TODO
-                        # print(offset)
-                        # print(satellite_id, elev, azim, snr)
-                        # self.gsv_part[talker].update({"satellites": {}})
+                        if satellite_id:
+                            __sats = {int(satellite_id): [int(elev) if elev else "NA",
+                                                          int(azim) if azim else "NA",
+                                                          int(snr) if snr else "NA"]}
+                            self.__tmp_gsv_part[talker]["satellites"].update(__sats)
+            if (sentence_number == number_of_messages and
+                    len(self.__tmp_gsv_part[talker]["satellites"].keys()) ==
+                    self.__tmp_gsv_part[talker]["satellites_in_view"]):
+                self.gsv_data = self.__tmp_gsv_part
 
     def __repr__(self) -> str:
         return (f"Time: {self.time}\n"
@@ -296,4 +305,5 @@ class microNMEA:
                 f"PDOP: {self.pdop}\n"
                 f"HDOP: {self.hdop}\n"
                 f"VDOP: {self.vdop}\n"
+                f"GNSS satellites in view: {self.gsv_data}\n"
                 )

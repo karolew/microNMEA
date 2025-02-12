@@ -72,11 +72,55 @@ class BasicMicroNMEA(unittest.TestCase):
                                      f"Satellites list for {gnss} incorrect.")
 
     def test_GSV(self):
-        self.nm.parse("$GLGSV,3,3,09,77,04,064,,1*47")
-        self.nm.parse("$GAGSV,3,3,10,08,08,203,,23,05,354,,7*75")
-        with self.subTest():
-            # TODO
-            pass
+        # Stage 1
+        self.nm.parse("$GPGSV,3,1,10,01,81,167,33,02,73,168,18,03,63,271,30,21,52,147,,1*68")
+        expected_satellite_data = {
+            'GP':
+                {'satellites_in_view': 10,
+                 'satellites':
+                     {1: [81, 167, 33], 2: [73, 168, 18],
+                      3: [63, 271, 30], 21: [52, 147, 'NA']}
+                 }
+        }
+        with self.subTest("First GSV message"):
+            self.assertDictEqual(expected_satellite_data, self.nm._microNMEA__tmp_gsv_part,
+                                 "Satellites tmp map is incorrect.")
+        with self.subTest("First GSV message"):
+            self.assertDictEqual({}, self.nm.gsv_data, "Satellites map should be empty.")
+
+        # Stage 2
+        self.nm.parse("$GPGSV,3,2,10,17,37,296,49,32,29,051,33,28,27,092,34,04,20,202,32,1*6C")
+        expected_satellite_data = {
+            'GP':
+                {'satellites_in_view': 10,
+                 'satellites':
+                     {1: [81, 167, 33], 2: [73, 168, 18],
+                      3: [63, 271, 30], 21: [52, 147, 'NA'],
+                      17: [37, 296, 49], 32: [29, 51, 33],
+                      28: [27, 92, 34], 4: [20, 202, 32]}
+                 }
+        }
+        with self.subTest("First GSV message"):
+            self.assertDictEqual(expected_satellite_data, self.nm._microNMEA__tmp_gsv_part,
+                                 "Satellites tmp map is incorrect.")
+        with self.subTest("First GSV message"):
+            self.assertDictEqual({}, self.nm.gsv_data, "Satellites map should be empty.")
+
+        # Stage 3
+        self.nm.parse("$GPGSV,3,3,10,31,18,118,09,19,17,322,41,1*67")
+        expected_satellite_data = {
+            'GP':
+                {'satellites_in_view': 10,
+                 'satellites':
+                    {1: [81, 167, 33], 2: [73, 168, 18],
+                     3: [63, 271, 30], 21: [52, 147, 'NA'],
+                     17: [37, 296, 49], 32: [29, 51, 33],
+                     28: [27, 92, 34], 4: [20, 202, 32],
+                     31: [18, 118, 9], 19: [17, 322, 41]}
+                 }
+        }
+        with self.subTest("First GSV message"):
+            self.assertDictEqual(expected_satellite_data, self.nm.gsv_data, "Satellites map should be empty.")
 
 
 if __name__ == "__main__":
