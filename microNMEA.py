@@ -19,7 +19,10 @@ class MicroNMEA:
         "E": "Estimated (dead reckoning) Mode",
         "M": "Manual Mode",
         "S": "Simulator Mode",
-        "N": "Data Noe Valid"
+        "N": "Data Noe Valid",
+        "R": "RTK Fix",
+        "F": "RTK Float",
+        "P": "Precise"
     }
 
     GNSS_IDS = {
@@ -64,26 +67,14 @@ class MicroNMEA:
         "N", "S", "E", "W"
     )
 
-    DIRECTIONS = (
-        "N", "NNE", "NE", "ENE",
-        "E", "ESE", "SE", "SSE",
-        "S", "SSW", "SW", "WSW",
-        "W", "WNW", "NW", "NNW"
-    )
-
-    MONTHS = (
-        "January", "February", "March",
-        "April", "May", "June",
-        "July", "August", "September",
-        "October", "November", "December"
-    )
-
     SEN_START = "$"
     SEN_SEPARATOR = ","
     SEN_CRC = "*"
     VALID = "A"
+    SPEED_KNOTS_2_KMH = 1.852
 
-    def __init__(self, crc: bool = True) -> None:
+    def __init__(self, units: int = 1, crc: bool = True) -> None:
+        self.units = units  # 1 raw, 2 EU
         self.crc = crc
         self.fields = []
         self.time = None
@@ -104,6 +95,9 @@ class MicroNMEA:
         self.geoidal_separation = None
         self.__tmp_gsv_part = dict()
         self.gsv_data = dict()
+        self.speed = None
+        self.course = None
+        self.date = None
 
     @staticmethod
     def catch_err(func):
@@ -136,6 +130,7 @@ class MicroNMEA:
         crc = 0
         for __char in message[1:]:
             crc ^= ord(__char)
+        print(format(crc, "02x"))
         return format(crc, "02x") == expected_crc.lower()
 
     @catch_err
@@ -227,7 +222,41 @@ class MicroNMEA:
             return int(field)
 
     @catch_err
+    def get_mode(self, field):
+        if field and field in self.MODES:
+            self.mode = self.MODES.get(field)
+
+    @catch_err
+    def get_speed(self, field: str) -> None:
+        if field:
+            speed_knots = float(field)
+            if self.units == 1:
+                self.speed = speed_knots
+            elif self.units == 2:
+                self.speed = round(speed_knots * self.SPEED_KNOTS_2_KMH, 2)
+
+    @catch_err
+    def get_course(self, field: str) -> None:
+        if field:
+            self.course = float(field)
+
+    @catch_err
+    def get_date(self, field):
+        # YYYY - MM - DD
+        if field:
+            if self.units == 1:
+                self.date = field
+            elif self.units == 2:
+                dd = field[:2]
+                mm = field[2:4]
+                yy = field[4:]
+                self.date = f"{2000 + int(yy)}-{mm}-{dd}"
+
+    @catch_err
     def gga(self) -> None:
+        """
+         Global positioning system fix data.
+        """
         self.get_time(self.fields[1])
         self.get_lat(self.fields[2], self.fields[3])
         self.get_lon(self.fields[4], self.fields[5])
@@ -241,14 +270,20 @@ class MicroNMEA:
 
     @catch_err
     def gll(self) -> None:
+        """
+         Geographic position latitude and longitude.
+        """
         if self.fields[6] == self.VALID:
             self.get_lat(self.fields[1], self.fields[2])
             self.get_lon(self.fields[3], self.fields[4])
             self.get_time(self.fields[5])
-            self.mode = self.MODES.get(self.fields[7])
+            self.get_mode(self.fields[7])
 
     @catch_err
     def gsa(self) -> None:
+        """
+         GNSS DOP and active satellites.
+        """
         self.get_satellites_used_list(self.fields[18], self.fields[3:15])
         self.get_pdop(self.fields[15])
         self.get_hdop(self.fields[16])
@@ -257,8 +292,11 @@ class MicroNMEA:
     @catch_err
     def gsv(self) -> None:
         """
+        GNSS satellites in view.
+
         GSV sentence may be part of bigger message. This means all sentences of the
-        message must be read to get correct content.
+        message must be read to get correct content. Correct satellites data are in
+        gsv_data attribute.
         """
         # Check GNSS is supported.
         talker = self.fields[0][1:3]
@@ -290,8 +328,32 @@ class MicroNMEA:
                     self.__tmp_gsv_part[talker]["satellites_in_view"]):
                 self.gsv_data = self.__tmp_gsv_part
 
+    @catch_err
+    def rmc(self) -> None:
+        """
+        Recommended minimum specific GNSS data
+        """
+        if self.fields[2] == self.VALID:
+            self.get_time(self.fields[1])
+            self.get_lat(self.fields[3], self.fields[4])
+            self.get_lon(self.fields[5], self.fields[6])
+            self.get_speed(self.fields[7])
+            self.get_course(self.fields[8])
+            self.get_date(self.fields[9])
+            self.get_mode(self.fields[12])
+
+    @catch_err
+    def vtg(self) -> None:
+        """
+        Course Over Ground and Ground Speed.
+        """
+        self.get_speed(self.fields[1])
+        self.get_course(self.fields[5])
+        self.get_mode(self.fields[9])
+
     def __repr__(self) -> str:
         return (f"Time: {self.time}\n"
+                f"Date: {self.date}\n"
                 f"Latitude: {self.lat} {self.lat_ns}\n"
                 f"Longitude: {self.lon} {self.lon_ew}\n"
                 f"Altitude {self.alt}\n"
@@ -306,4 +368,6 @@ class MicroNMEA:
                 f"HDOP: {self.hdop}\n"
                 f"VDOP: {self.vdop}\n"
                 f"GNSS satellites in view: {self.gsv_data}\n"
+                f"Speed: {self.speed}\n"
+                f"Course: {self.course}\n"
                 )

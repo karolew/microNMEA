@@ -19,8 +19,17 @@ Example:
 nmea = MicroNMEA()
 nmea.parse("$GNGSA,A,3,67,68,69,84,,,,,,,,,1.2,0.7,1.0,2*3B")
 ```
+## Parameters
 
-# Available attributes
+* unit: 
+  * 1 - raw data. E.g. knots (default).
+  * 2 - ISO 8601 standards. E.g. speed km/h, meters, date YYYY-MM-DD.
+* crc:
+  * True - calculate checksum for each sentence (default).
+  * False - skip checksum calculation.
+
+# Available GNSS attributes
+* date
 * time
 * lat
 * lat_ns
@@ -37,4 +46,6 @@ nmea.parse("$GNGSA,A,3,67,68,69,84,,,,,,,,,1.2,0.7,1.0,2*3B")
 * dgps_station_id
 * dgps_age
 * geoidal_separation
-* gsv_part
+* gsv_data
+* speed
+* cource

@@ -7,7 +7,7 @@ import microNMEA
 class BasicMicroNMEA(unittest.TestCase):
 
     def setUp(self):
-        self.nm = microNMEA.microNMEA()
+        self.nm = microNMEA.MicroNMEA()
         print(f"\nStart {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
 
     def tearDown(self):
@@ -83,7 +83,7 @@ class BasicMicroNMEA(unittest.TestCase):
                  }
         }
         with self.subTest("First GSV message"):
-            self.assertDictEqual(expected_satellite_data, self.nm._microNMEA__tmp_gsv_part,
+            self.assertDictEqual(expected_satellite_data, self.nm._MicroNMEA__tmp_gsv_part,
                                  "Satellites tmp map is incorrect.")
         with self.subTest("First GSV message"):
             self.assertDictEqual({}, self.nm.gsv_data, "Satellites map should be empty.")
@@ -101,7 +101,7 @@ class BasicMicroNMEA(unittest.TestCase):
                  }
         }
         with self.subTest("First GSV message"):
-            self.assertDictEqual(expected_satellite_data, self.nm._microNMEA__tmp_gsv_part,
+            self.assertDictEqual(expected_satellite_data, self.nm._MicroNMEA__tmp_gsv_part,
                                  "Satellites tmp map is incorrect.")
         with self.subTest("First GSV message"):
             self.assertDictEqual({}, self.nm.gsv_data, "Satellites map should be empty.")
@@ -121,6 +121,53 @@ class BasicMicroNMEA(unittest.TestCase):
         }
         with self.subTest("First GSV message"):
             self.assertDictEqual(expected_satellite_data, self.nm.gsv_data, "Satellites map should be empty.")
+
+    def test_RMC(self):
+        self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,V*04")
+        with self.subTest():
+            self.assertEqual("21:57:44.000", self.nm.time, f"Time incorrect.")
+        with self.subTest():
+            self.assertEqual("080225", self.nm.date, f"Date incorrect.")
+        with self.subTest():
+            self.assertEqual("Autonomous Mode", self.nm.mode, f"Mode incorrect.")
+        with self.subTest():
+            self.assertEqual(554.1131555, self.nm.lat, f"Latitude incorrect.")
+        with self.subTest():
+            self.assertEqual(112.0892945, self.nm.lon, f"Longitude incorrect.")
+        with self.subTest():
+            self.assertEqual(0, self.nm.speed, f"Speed incorrect.")
+        with self.subTest():
+            self.assertEqual(0, self.nm.course, f"Course incorrect.")
+
+    def test_VTG(self):
+        self.nm.parse("$GNVTG,122.7,T,,M,015.1,N,000.0,K,A*10")
+        with self.subTest():
+            self.assertEqual("Autonomous Mode", self.nm.mode, f"Mode incorrect.")
+        with self.subTest():
+            self.assertEqual(122.7, self.nm.speed, f"Speed incorrect.")
+        with self.subTest():
+            self.assertEqual(15.1, self.nm.course, f"Course incorrect.")
+
+
+class UnitsISO8601MicroNMEA(unittest.TestCase):
+
+    def setUp(self):
+        self.nm = microNMEA.MicroNMEA(2)
+        print(f"\nStart {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
+
+    def tearDown(self):
+        print(self.nm)
+        print("End Test".ljust(90, "-"))
+
+    def test_speed_kmh_VTG(self):
+        self.nm.parse("$GNVTG,122.7,T,,M,015.1,N,000.0,K,A*10")
+        with self.subTest():
+            self.assertEqual(227.24, self.nm.speed, f"Speed incorrect.")
+
+    def test_date_YYYYMMDD_RMC(self):
+        self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,V*04")
+        with self.subTest():
+            self.assertEqual("2025-02-08", self.nm.date, f"Date incorrect.")
 
 
 if __name__ == "__main__":
