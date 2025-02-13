@@ -19,7 +19,8 @@ class MicroNMEA:
         "E": "Estimated (dead reckoning) Mode",
         "M": "Manual Mode",
         "S": "Simulator Mode",
-        "N": "Data Noe Valid",
+        "N": "Data Not Valid",
+        "V": "Data Not Valid",
         "R": "RTK Fix",
         "F": "RTK Float",
         "P": "Precise"
@@ -98,6 +99,12 @@ class MicroNMEA:
         self.speed = None
         self.course = None
         self.date = None
+        self.heading = None
+        self.east_velocity = None
+        self.north_velocity = None
+        self.up_velocity = None
+        self.rtk_age = None
+        self.rtk_ratio = None
 
     @staticmethod
     def catch_err(func):
@@ -130,7 +137,6 @@ class MicroNMEA:
         crc = 0
         for __char in message[1:]:
             crc ^= ord(__char)
-        print(format(crc, "02x"))
         return format(crc, "02x") == expected_crc.lower()
 
     @catch_err
@@ -222,7 +228,7 @@ class MicroNMEA:
             return int(field)
 
     @catch_err
-    def get_mode(self, field):
+    def get_mode(self, field: str) -> None:
         if field and field in self.MODES:
             self.mode = self.MODES.get(field)
 
@@ -241,8 +247,7 @@ class MicroNMEA:
             self.course = float(field)
 
     @catch_err
-    def get_date(self, field):
-        # YYYY - MM - DD
+    def get_date(self, field: str) -> None:
         if field:
             if self.units == 1:
                 self.date = field
@@ -251,6 +256,44 @@ class MicroNMEA:
                 mm = field[2:4]
                 yy = field[4:]
                 self.date = f"{2000 + int(yy)}-{mm}-{dd}"
+
+    @catch_err
+    def get_date_2(self, day: str, month: str, year: str) -> None:
+        if day and month and year:
+            if self.units == 1:
+                self.date = f"{day}{month}{year[2:]}"
+            elif self.units == 2:
+                self.date = f"{year}-{month}-{day}"
+
+    @catch_err
+    def get_heading(self, field: str) -> None:
+        if field:
+            self.heading = float(field)
+
+    @catch_err
+    def get_east_velocity(self, field: str) -> None:
+        if field:
+            self.east_velocity = float(field)
+
+    @catch_err
+    def get_north_velocity(self, field: str) -> None:
+        if field:
+            self.north_velocity = float(field)
+
+    @catch_err
+    def get_up_velocity(self, field: str) -> None:
+        if field:
+            self.up_velocity = float(field)
+
+    @catch_err
+    def get_rtk_age(self, field: str) -> None:
+        if field:
+            self.rtk_age = float(field)
+
+    @catch_err
+    def get_rtk_ratio(self, field: str) -> None:
+        if field:
+            self.rtk_ratio = float(field)
 
     @catch_err
     def gga(self) -> None:
@@ -347,9 +390,61 @@ class MicroNMEA:
         """
         Course Over Ground and Ground Speed.
         """
-        self.get_speed(self.fields[1])
-        self.get_course(self.fields[5])
-        self.get_mode(self.fields[9])
+        if self.fields[9] != "N":
+            self.get_speed(self.fields[1])
+            self.get_course(self.fields[5])
+            self.get_mode(self.fields[9])
+
+    @catch_err
+    def zda(self) -> None:
+        """
+        Time and date.
+        """
+        self.get_time(self.fields[1])
+        self.get_date_2(self.fields[2], self.fields[3], self.fields[4])
+
+    @catch_err
+    def ths(self) -> None:
+        """
+        True Heading and Status.
+        """
+        if self.fields[2] != "V":
+            self.get_heading(self.fields[1])
+            self.get_mode(self.fields[2])
+
+    @catch_err
+    def sti(self):
+        """
+        TODO STI 005 Time Stamp Output
+        TODO STI 030 Recommended Minimum 3D GNSS Data
+        TODO STI 032 RTK Baseline Data
+        TODO STI 033 RTK RAW Measurement Monitoring Data
+        TODO STI 035 RTK Baseline Data of Rover Moving Base Receiver
+        """
+        if "005" in self.fields[1]:
+            self.get_time(self.fields[2])
+            self.get_date_2(self.fields[3], self.fields[4], self.fields[5])
+
+        elif "030" in self.fields[1]:
+            if self.fields[3] == self.VALID:
+                self.get_time(self.fields[2])
+                self.get_lat(self.fields[4], self.fields[5])
+                self.get_lon(self.fields[6], self.fields[7])
+                self.get_alt(self.fields[8])
+                self.get_east_velocity(self.fields[9])
+                self.get_north_velocity(self.fields[10])
+                self.get_up_velocity(self.fields[11])
+                self.get_date(self.fields[12])
+                self.get_mode(self.fields[13])
+                self.get_rtk_age(self.fields[14])
+                self.get_rtk_ratio(self.fields[15])
+
+        elif "032" in self.fields[1]:
+            if self.fields[4] == self.VALID:
+                self.get_time(self.fields[2])
+                self.get_date(self.fields[3])
+                self.get_mode(self.fields[5])
+                # TODO
 
     def __repr__(self) -> str:
         return (f"Time: {self.time}\n"

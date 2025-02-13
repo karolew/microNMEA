@@ -148,6 +148,20 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual(15.1, self.nm.course, f"Course incorrect.")
 
+    def test_ZDA(self):
+        self.nm.parse("$GNZDA,215744.000,08,02,2025,00,00*46")
+        with self.subTest():
+            self.assertEqual("21:57:44.000", self.nm.time, f"Time incorrect.")
+        with self.subTest():
+            self.assertEqual("080225", self.nm.date, f"Date incorrect.")
+
+    def test_THS(self):
+        self.nm.parse("$GNTHS,121.15,A*1F")
+        with self.subTest():
+            self.assertEqual("Autonomous Mode", self.nm.mode, f"Mode incorrect.")
+        with self.subTest():
+            self.assertEqual(121.15, self.nm.heading, f"Heading incorrect.")
+
 
 class UnitsISO8601MicroNMEA(unittest.TestCase):
 
