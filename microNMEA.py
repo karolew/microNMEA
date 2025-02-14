@@ -105,134 +105,115 @@ class MicroNMEA:
         self.up_velocity = None
         self.rtk_age = None
         self.rtk_ratio = None
+        self.east_pob = None
+        self.north_pob = None
+        self.up_pob = None
+        self.baseline_length = None
+        self.baseline_course = None
 
-    @staticmethod
-    def catch_err(func):
-        def inner(*args, **kwargs):
-            try:
-                val = func(*args, **kwargs)
-                return val
-            except Exception as e:
-                print(f"ERR {func.__name__}: {e}")
-        return inner
-
-    @catch_err
     def parse(self, raw_sentence: str) -> None:
-        sentence_type = raw_sentence[3:6]
-        sentence, expected_crc = raw_sentence.split(self.SEN_CRC)
-        if self.crc_check(sentence, expected_crc):
-            __call = getattr(self, sentence_type.lower(), None)
-            self.fields = sentence.split(self.SEN_SEPARATOR)
-            if __call:
-                __call()
+        try:
+            sentence_type = raw_sentence[2:5] if "STI" in raw_sentence else raw_sentence[3:6]
+            sentence, expected_crc = raw_sentence.split(self.SEN_CRC)
+            if self.crc_check(sentence, expected_crc):
+                __call = getattr(self, sentence_type.lower(), None)
+                self.fields = sentence.split(self.SEN_SEPARATOR)
+                if __call:
+                    try:
+                        __call()
+                    except Exception as e:
+                        print(f"ERROR processing {sentence_type} sentence. {e}")
+                else:
+                    print(f"Not supported sentence: {sentence_type}")
             else:
-                print(f"Not supported sentence: {sentence_type}")
-        else:
-            print(f"Incorrect CRC for {sentence_type}")
+                print(f"Incorrect CRC for {sentence_type}")
+        except Exception as e:
+            print(f"ERROR of parse. This should not happen. {e}")
 
-    @catch_err
     def crc_check(self, message: str, expected_crc: str) -> bool:
         if not self.crc:
             return True
         crc = 0
         for __char in message[1:]:
             crc ^= ord(__char)
-        return format(crc, "02x") == expected_crc.lower()
+        return ("0x%0.2X" % crc).lower()[2:] == expected_crc.lower()
 
-    @catch_err
     def get_lat(self, lat: str, lns: str) -> None:
         if lat and lns and lns in self.HEMISPHERES:
-            la_deg = int(lat[:3])
-            la_minutes = float(lat[3:])
+            la_deg = int(lat[:2])
+            la_minutes = float(lat[2:])
             decimal_degrees = la_deg + (la_minutes / 60)
             self.lat = round(decimal_degrees, 8)
             self.lat_ns = lns
 
-    @catch_err
     def get_lon(self, lon: str, lew: str) -> None:
         if lon and lew and lew in self.HEMISPHERES:
-            lo_deg = int(lon[:4])
-            lo_minutes = float(lon[4:])
+            lo_deg = int(lon[:3])
+            lo_minutes = float(lon[3:])
             decimal_degrees = lo_deg + (lo_minutes / 60)
             self.lon = round(decimal_degrees, 8)
             self.lon_ew = lew
 
-    @catch_err
     def get_quality(self, field: str) -> None:
         if field and int(field) in range(len(self.QUALITY)):
             self.quality = self.QUALITY[int(field)]
 
-    @catch_err
     def get_satellites_used(self, field: str) -> None:
         if field:
             self.number_of_satellites_used = int(field)
 
-    @catch_err
     def get_satellites_used_list(self, gnss_id: str, satellites: list) -> None:
         if gnss_id and int(gnss_id) in self.GNSS_IDS and satellites:
             self.satellites_used[self.GNSS_IDS[int(gnss_id)]["system"]] = satellites
 
-    @catch_err
     def get_pdop(self, field: str) -> None:
         if field and 0 < float(field) < 100:
             self.pdop = float(field)
 
-    @catch_err
     def get_hdop(self, field: str) -> None:
         if field and 0 < float(field) < 100:
             self.hdop = float(field)
 
-    @catch_err
     def get_vdop(self, field: str) -> None:
         if field and 0 < float(field) < 100:
             self.vdop = float(field)
 
-    @catch_err
     def get_alt(self, field: str) -> None:
         if field:
             self.alt = float(field)
 
-    @catch_err
     def get_dgps_station_id(self, field: str) -> None:
         if field:
             self.dgps_station_id = int(field)
 
-    @catch_err
     def get_dgps_age(self, field: str) -> None:
         if field:
             self.dgps_age = field
 
-    @catch_err
     def get_geoidal_separation(self, field: str) -> None:
         if field:
             self.geoidal_separation = float(field)
 
-    @catch_err
     def get_time(self, field: str) -> None:
         if field:
             self.time = f"{field[:2]}:{field[2:4]}:{field[4:]}"
 
-    @catch_err
     def get_elevation(self, field: str) -> int:
         if field and int(field) in range(0, 90 + 1):
             return int(field)
 
-    @catch_err
     def get_azimuth(self, field: str) -> int:
         if field and int(field) in range(0, 359 + 1):
             return int(field)
 
-    @catch_err
     def get_snr(self, field: str) -> int:
         if field and int(field) in range(0, 99 + 1):
             return int(field)
 
-    @catch_err
     def get_mode(self, field: str) -> None:
         if field and field in self.MODES:
             self.mode = self.MODES.get(field)
 
-    @catch_err
     def get_speed(self, field: str) -> None:
         if field:
             speed_knots = float(field)
@@ -241,12 +222,10 @@ class MicroNMEA:
             elif self.units == 2:
                 self.speed = round(speed_knots * self.SPEED_KNOTS_2_KMH, 2)
 
-    @catch_err
     def get_course(self, field: str) -> None:
         if field:
             self.course = float(field)
 
-    @catch_err
     def get_date(self, field: str) -> None:
         if field:
             if self.units == 1:
@@ -257,7 +236,6 @@ class MicroNMEA:
                 yy = field[4:]
                 self.date = f"{2000 + int(yy)}-{mm}-{dd}"
 
-    @catch_err
     def get_date_2(self, day: str, month: str, year: str) -> None:
         if day and month and year:
             if self.units == 1:
@@ -265,37 +243,50 @@ class MicroNMEA:
             elif self.units == 2:
                 self.date = f"{year}-{month}-{day}"
 
-    @catch_err
     def get_heading(self, field: str) -> None:
         if field:
             self.heading = float(field)
 
-    @catch_err
     def get_east_velocity(self, field: str) -> None:
         if field:
             self.east_velocity = float(field)
 
-    @catch_err
     def get_north_velocity(self, field: str) -> None:
         if field:
             self.north_velocity = float(field)
 
-    @catch_err
     def get_up_velocity(self, field: str) -> None:
         if field:
             self.up_velocity = float(field)
 
-    @catch_err
     def get_rtk_age(self, field: str) -> None:
         if field:
             self.rtk_age = float(field)
 
-    @catch_err
     def get_rtk_ratio(self, field: str) -> None:
         if field:
             self.rtk_ratio = float(field)
 
-    @catch_err
+    def get_east_pob(self, field):
+        if field:
+            self.east_pob = float(field)
+
+    def get_north_pob(self, field):
+        if field:
+            self.north_pob = float(field)
+
+    def get_up_pob(self, field):
+        if field:
+            self.up_pob = float(field)
+
+    def get_baseline_length(self, field):
+        if field:
+            self.baseline_length = float(field)
+
+    def get_baseline_course(self, field):
+        if field:
+            self.baseline_course = float(field)
+
     def gga(self) -> None:
         """
          Global positioning system fix data.
@@ -311,7 +302,6 @@ class MicroNMEA:
         self.get_dgps_age(self.fields[13])
         self.get_dgps_station_id(self.fields[14])
 
-    @catch_err
     def gll(self) -> None:
         """
          Geographic position latitude and longitude.
@@ -322,7 +312,6 @@ class MicroNMEA:
             self.get_time(self.fields[5])
             self.get_mode(self.fields[7])
 
-    @catch_err
     def gsa(self) -> None:
         """
          GNSS DOP and active satellites.
@@ -332,7 +321,6 @@ class MicroNMEA:
         self.get_hdop(self.fields[16])
         self.get_vdop(self.fields[17])
 
-    @catch_err
     def gsv(self) -> None:
         """
         GNSS satellites in view.
@@ -371,7 +359,6 @@ class MicroNMEA:
                     self.__tmp_gsv_part[talker]["satellites_in_view"]):
                 self.gsv_data = self.__tmp_gsv_part
 
-    @catch_err
     def rmc(self) -> None:
         """
         Recommended minimum specific GNSS data
@@ -385,7 +372,6 @@ class MicroNMEA:
             self.get_date(self.fields[9])
             self.get_mode(self.fields[12])
 
-    @catch_err
     def vtg(self) -> None:
         """
         Course Over Ground and Ground Speed.
@@ -395,7 +381,6 @@ class MicroNMEA:
             self.get_course(self.fields[5])
             self.get_mode(self.fields[9])
 
-    @catch_err
     def zda(self) -> None:
         """
         Time and date.
@@ -403,7 +388,6 @@ class MicroNMEA:
         self.get_time(self.fields[1])
         self.get_date_2(self.fields[2], self.fields[3], self.fields[4])
 
-    @catch_err
     def ths(self) -> None:
         """
         True Heading and Status.
@@ -412,14 +396,13 @@ class MicroNMEA:
             self.get_heading(self.fields[1])
             self.get_mode(self.fields[2])
 
-    @catch_err
     def sti(self):
         """
-        TODO STI 005 Time Stamp Output
-        TODO STI 030 Recommended Minimum 3D GNSS Data
-        TODO STI 032 RTK Baseline Data
+        STI 005 Time Stamp Output
+        STI 030 Recommended Minimum 3D GNSS Data
+        STI 032 RTK Baseline Data
         TODO STI 033 RTK RAW Measurement Monitoring Data
-        TODO STI 035 RTK Baseline Data of Rover Moving Base Receiver
+        STI 035 RTK Baseline Data of Rover Moving Base Receiver
         """
         if "005" in self.fields[1]:
             self.get_time(self.fields[2])
@@ -439,12 +422,22 @@ class MicroNMEA:
                 self.get_rtk_age(self.fields[14])
                 self.get_rtk_ratio(self.fields[15])
 
-        elif "032" in self.fields[1]:
+        elif "032" in self.fields[1] or "035" in self.fields[1]:
             if self.fields[4] == self.VALID:
                 self.get_time(self.fields[2])
                 self.get_date(self.fields[3])
                 self.get_mode(self.fields[5])
-                # TODO
+                self.get_east_pob(self.fields[6])
+                self.get_north_pob(self.fields[7])
+                self.get_up_pob(self.fields[8])
+                self.get_baseline_length(self.fields[9])
+                self.get_baseline_course(self.fields[10])
+
+        elif "033" in self.fields[1]:
+            print("STI 033 not implemented")
+
+        else:
+            print(f"Unknown STI ID: {self.fields[1]}")
 
     def __repr__(self) -> str:
         return (f"Time: {self.time}\n"
@@ -465,4 +458,15 @@ class MicroNMEA:
                 f"GNSS satellites in view: {self.gsv_data}\n"
                 f"Speed: {self.speed}\n"
                 f"Course: {self.course}\n"
+                f"Heading: {self.heading}\n"
+                f"East velocity: {self.east_velocity}\n"
+                f"North velocity: {self.north_velocity}\n"
+                f"Up velocity: {self.up_velocity}\n"
+                f"RTK age: {self.rtk_age}\n"
+                f"RTK ratio: {self.rtk_ratio}\n"
+                f"East-projection of baseline: {self.east_pob}\n"
+                f"North-projection of baseline: {self.north_pob}\n"
+                f"Up-projection of baseline: {self.up_pob}\n"
+                f"Baseline length: {self.baseline_length}\n"
+                f"Baseline course: {self.baseline_course}"
                 )

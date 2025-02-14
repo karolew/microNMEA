@@ -49,3 +49,9 @@ nmea.parse("$GNGSA,A,3,67,68,69,84,,,,,,,,,1.2,0.7,1.0,2*3B")
 * gsv_data
 * speed
 * cource
+* heading
+* east_velocity
+* north_velocity
+* up_velocity
+* rtk_age
+* rtk_ratio
