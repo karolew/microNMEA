@@ -113,6 +113,10 @@ class MicroNMEA:
 
     def parse(self, raw_sentence: str) -> None:
         try:
+            if raw_sentence == "" or raw_sentence[0] != self.SEN_START or self.SEN_CRC not in raw_sentence:
+                print("Sentence empty or incomplete.")
+                return
+            # STI messages key differs from other sentences. They have shorter sentence prefix and additional ID field.
             sentence_type = raw_sentence[2:5] if "STI" in raw_sentence else raw_sentence[3:6]
             sentence, expected_crc = raw_sentence.split(self.SEN_CRC)
             if self.crc_check(sentence, expected_crc):
@@ -122,17 +126,19 @@ class MicroNMEA:
                     try:
                         __call()
                     except Exception as e:
-                        print(f"ERROR processing {sentence_type} sentence. {e}")
+                        print(f"ERROR of {sentence_type} sentence. {e}")
                 else:
                     print(f"Not supported sentence: {sentence_type}")
             else:
                 print(f"Incorrect CRC for {sentence_type}")
         except Exception as e:
-            print(f"ERROR of parse. This should not happen. {e}")
+            print(f"ERROR of parse. {e}")
 
     def crc_check(self, message: str, expected_crc: str) -> bool:
+        # Skip CRC check.
         if not self.crc:
             return True
+
         crc = 0
         for __char in message[1:]:
             crc ^= ord(__char)
@@ -196,7 +202,20 @@ class MicroNMEA:
 
     def get_time(self, field: str) -> None:
         if field:
-            self.time = f"{field[:2]}:{field[2:4]}:{field[4:]}"
+            if self.units == 1:
+                self.time = field
+            elif self.units == 2:
+                self.time = f"{field[:2]}:{field[2:4]}:{field[4:]}"
+
+    def get_date(self, field: str) -> None:
+        if field:
+            if self.units == 1:
+                self.date = field
+            elif self.units == 2:
+                dd = field[:2]
+                mm = field[2:4]
+                yy = field[4:]
+                self.date = f"{2000 + int(yy)}-{mm}-{dd}"
 
     def get_elevation(self, field: str) -> int:
         if field and int(field) in range(0, 90 + 1):
@@ -225,16 +244,6 @@ class MicroNMEA:
     def get_course(self, field: str) -> None:
         if field:
             self.course = float(field)
-
-    def get_date(self, field: str) -> None:
-        if field:
-            if self.units == 1:
-                self.date = field
-            elif self.units == 2:
-                dd = field[:2]
-                mm = field[2:4]
-                yy = field[4:]
-                self.date = f"{2000 + int(yy)}-{mm}-{dd}"
 
     def get_date_2(self, day: str, month: str, year: str) -> None:
         if day and month and year:
@@ -355,7 +364,7 @@ class MicroNMEA:
                                                           int(snr) if snr else "NA"]}
                             self.__tmp_gsv_part[talker]["satellites"].update(__sats)
             if (sentence_number == number_of_messages and
-                    len(self.__tmp_gsv_part[talker]["satellites"].keys()) ==
+                    len(self.__tmp_gsv_part[talker]["satellites"]) ==
                     self.__tmp_gsv_part[talker]["satellites_in_view"]):
                 self.gsv_data = self.__tmp_gsv_part
 

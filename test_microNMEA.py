@@ -20,7 +20,7 @@ class BasicMicroNMEA(unittest.TestCase):
         self.nm.parse("$GPGGA,215230.000,5546.7965950,N,01125.3586740,E,1,19,0.7,225.278,M,36.900,M,,0000*5f")
         print(self.nm.fields)
         with self.subTest():
-            self.assertEqual("21:52:30.000", self.nm.time, f"Time incorrect.")
+            self.assertEqual("215230.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
             self.assertEqual(55.77994325, self.nm.lat, f"Latitude incorrect.")
         with self.subTest():
@@ -46,7 +46,7 @@ class BasicMicroNMEA(unittest.TestCase):
         self.nm.parse("$GNGLL,5546.7965950,N,01125.3586740,E,215230.000,A,A*4f")
         print(self.nm.fields)
         with self.subTest():
-            self.assertEqual("21:52:30.000", self.nm.time, f"Time incorrect.")
+            self.assertEqual("215230.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
             self.assertEqual(55.77994325, self.nm.lat, f"Latitude incorrect.")
         with self.subTest():
@@ -137,7 +137,7 @@ class BasicMicroNMEA(unittest.TestCase):
         self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,V*04")
         print(self.nm.fields)
         with self.subTest():
-            self.assertEqual("21:57:44.000", self.nm.time, f"Time incorrect.")
+            self.assertEqual("215744.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
             self.assertEqual("080225", self.nm.date, f"Date incorrect.")
         with self.subTest():
@@ -165,7 +165,7 @@ class BasicMicroNMEA(unittest.TestCase):
         self.nm.parse("$GNZDA,215744.000,08,02,2025,00,00*46")
         print(self.nm.fields)
         with self.subTest():
-            self.assertEqual("21:57:44.000", self.nm.time, f"Time incorrect.")
+            self.assertEqual("215744.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
             self.assertEqual("080225", self.nm.date, f"Date incorrect.")
 
@@ -181,7 +181,7 @@ class BasicMicroNMEA(unittest.TestCase):
         self.nm.parse("$PSTI,005,121959.0000003,20,07,2020,,,,,*34")
         print(self.nm.fields)
         with self.subTest():
-            self.assertEqual("12:19:59.0000003", self.nm.time, f"Time incorrect.")
+            self.assertEqual("121959.0000003", self.nm.time, f"Time incorrect.")
         with self.subTest():
             self.assertEqual("200720", self.nm.date, f"Date incorrect.")
 
@@ -190,7 +190,7 @@ class BasicMicroNMEA(unittest.TestCase):
                       "94.615,0.00,-0.01,0.04,111219,R,0.999,3.724*1A")
         print(self.nm.fields)
         with self.subTest():
-            self.assertEqual("03:30:10.000", self.nm.time, f"Time incorrect.")
+            self.assertEqual("033010.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
             self.assertEqual("111219", self.nm.date, f"Date incorrect.")
         with self.subTest():
@@ -240,3 +240,5 @@ class UnitsISO8601MicroNMEA(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
