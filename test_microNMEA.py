@@ -173,7 +173,7 @@ class BasicMicroNMEA(unittest.TestCase):
         self.nm.parse("$GNTHS,121.15,A*1F")
         print(self.nm.fields)
         with self.subTest():
-            self.assertEqual("Autonomous Mode", self.nm.mode, f"Mode incorrect.")
+            self.assertEqual("Autonomous Mode", self.nm.heading_mode, f"Mode incorrect.")
         with self.subTest():
             self.assertEqual(121.15, self.nm.heading, f"Heading incorrect.")
 

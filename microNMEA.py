@@ -74,8 +74,9 @@ class MicroNMEA:
     VALID = "A"
     SPEED_KNOTS_2_KMH = 1.852
 
-    def __init__(self, units: int = 1, crc: bool = True) -> None:
-        self.units = units  # 1 raw, 2 EU
+    def __init__(self, units: int = 1, formats: int = 2, crc: bool = True) -> None:
+        self.units = units
+        self.formats = formats
         self.crc = crc
         self.fields = []
         self.time = None
@@ -100,6 +101,7 @@ class MicroNMEA:
         self.course = None
         self.date = None
         self.heading = None
+        self.heading_mode = None
         self.east_velocity = None
         self.north_velocity = None
         self.up_velocity = None
@@ -146,19 +148,31 @@ class MicroNMEA:
 
     def get_lat(self, lat: str, lns: str) -> None:
         if lat and lns and lns in self.HEMISPHERES:
-            la_deg = int(lat[:2])
-            la_minutes = float(lat[2:])
-            decimal_degrees = la_deg + (la_minutes / 60)
-            self.lat = round(decimal_degrees, 8)
-            self.lat_ns = lns
+            # Raw
+            if self.formats == 1:
+                self.lat = lat
+                self.lat_ns = lns
+            # dd
+            elif self.formats == 2:
+                la_deg = int(lat[:2])
+                la_minutes = float(lat[2:])
+                decimal_degrees = la_deg + (la_minutes / 60)
+                self.lat = round(decimal_degrees, 8) * (-1 if lns.lower() == "s" else 1)
+                self.lat_ns = lns
 
     def get_lon(self, lon: str, lew: str) -> None:
         if lon and lew and lew in self.HEMISPHERES:
-            lo_deg = int(lon[:3])
-            lo_minutes = float(lon[3:])
-            decimal_degrees = lo_deg + (lo_minutes / 60)
-            self.lon = round(decimal_degrees, 8)
-            self.lon_ew = lew
+            # Raw
+            if self.formats == 1:
+                self.lon = lon
+                self.lon_ew = lew
+            # dd
+            elif self.formats == 2:
+                lo_deg = int(lon[:3])
+                lo_minutes = float(lon[3:])
+                decimal_degrees = lo_deg + (lo_minutes / 60)
+                self.lon = round(decimal_degrees, 8) * (-1 if lew.lower() == "w" else 1)
+                self.lon_ew = lew
 
     def get_quality(self, field: str) -> None:
         if field and int(field) in range(len(self.QUALITY)):
@@ -232,6 +246,10 @@ class MicroNMEA:
     def get_mode(self, field: str) -> None:
         if field and field in self.MODES:
             self.mode = self.MODES.get(field)
+
+    def get_heading_mode(self, field: str) -> None:
+        if field and field in self.MODES:
+            self.heading_mode = self.MODES.get(field)
 
     def get_speed(self, field: str) -> None:
         if field:
@@ -403,7 +421,7 @@ class MicroNMEA:
         """
         if self.fields[2] != "V":
             self.get_heading(self.fields[1])
-            self.get_mode(self.fields[2])
+            self.get_heading_mode(self.fields[2])
 
     def sti(self):
         """
