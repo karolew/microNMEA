@@ -110,10 +110,10 @@ class BasicMicroNMEA(unittest.TestCase):
                       28: [27, 92, 34], 4: [20, 202, 32]}
                  }
         }
-        with self.subTest("First GSV message"):
+        with self.subTest("Second GSV message"):
             self.assertDictEqual(expected_satellite_data, self.nm._MicroNMEA__tmp_gsv_part,
                                  "Satellites tmp map is incorrect.")
-        with self.subTest("First GSV message"):
+        with self.subTest("Second GSV message"):
             self.assertDictEqual({}, self.nm.gsv_data, "Satellites map should be empty.")
 
         # Stage 3
@@ -130,7 +130,7 @@ class BasicMicroNMEA(unittest.TestCase):
                      31: [18, 118, 9], 19: [17, 322, 41]}
                  }
         }
-        with self.subTest("First GSV message"):
+        with self.subTest("Third, the last one, GSV message"):
             self.assertDictEqual(expected_satellite_data, self.nm.gsv_data, "Satellites map should be empty.")
 
     def test_RMC(self):
@@ -236,6 +236,27 @@ class UnitsISO8601MicroNMEA(unittest.TestCase):
         print(self.nm.fields)
         with self.subTest():
             self.assertEqual("2020-07-20", self.nm.date, f"Date incorrect.")
+
+
+class FormatsMicroNMEA(unittest.TestCase):
+
+    def setUp(self):
+        self.nm = microNMEA.MicroNMEA(formats=1)
+        print("\n".ljust(90, "-"))
+        print(f"Start {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
+        print("".ljust(90, "-"))
+
+    def tearDown(self):
+        print(self.nm)
+        print("Stop Test".ljust(90, "-"))
+
+    def test_coordinates_DD_GGA(self):
+        self.nm.parse("$GPGGA,215230.000,5546.7965950,N,01125.3586740,E,1,19,0.7,225.278,M,36.900,M,,0000*5f")
+        print(self.nm.fields)
+        with self.subTest():
+            self.assertEqual("5546.7965950", self.nm.lat, f"Latitude incorrect.")
+        with self.subTest():
+            self.assertEqual("01125.3586740", self.nm.lon, f"Longitude incorrect.")
 
 
 if __name__ == "__main__":
