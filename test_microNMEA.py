@@ -6,17 +6,17 @@ import microNMEA
 
 class BasicMicroNMEA(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.nm = microNMEA.MicroNMEA()
         print("\n".ljust(90, "-"))
         print(f"Start {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
         print("".ljust(90, "-"))
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         print(self.nm)
         print("End Test".ljust(90, "-"))
 
-    def test_GGA(self):
+    def test_GGA(self) -> None:
         self.nm.parse("$GPGGA,215230.000,5546.7965950,N,01125.3586740,E,1,19,0.7,225.278,M,36.900,M,,0000*5f")
         print(self.nm.fields)
         with self.subTest():
@@ -42,7 +42,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual(0.7, self.nm.hdop, f"HDOP incorrect.")
 
-    def test_GLL(self):
+    def test_GLL(self) -> None:
         self.nm.parse("$GNGLL,5546.7965950,N,01125.3586740,E,215230.000,A,A*4f")
         print(self.nm.fields)
         with self.subTest():
@@ -54,7 +54,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("Autonomous Mode", self.nm.mode, f"Mode incorrect.")
 
-    def test_GSA(self):
+    def test_GSA(self) -> None:
         self.nm.parse("$GNGSA,A,3,06,11,16,21,22,,,,,,,,1.2,0.7,1.0,4*33")
         print(self.nm.fields)
         self.nm.parse("$GNGSA,A,3,01,02,03,04,17,19,32,,,,,,1.2,0.7,1.0,1*3F")
@@ -79,7 +79,7 @@ class BasicMicroNMEA(unittest.TestCase):
                 self.assertListEqual(satelites, self.nm.satellites_used[gnss],
                                      f"Satellites list for {gnss} incorrect.")
 
-    def test_GSV(self):
+    def test_GSV(self) -> None:
         # Stage 1
         self.nm.parse("$GPGSV,3,1,10,01,81,167,33,02,73,168,18,03,63,271,30,21,52,147,,1*68")
         print(self.nm.fields)
@@ -133,7 +133,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest("Third, the last one, GSV message"):
             self.assertDictEqual(expected_satellite_data, self.nm.gsv_data, "Satellites map should be empty.")
 
-    def test_RMC(self):
+    def test_RMC(self) -> None:
         self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,V*04")
         print(self.nm.fields)
         with self.subTest():
@@ -151,7 +151,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual(0, self.nm.course, f"Course incorrect.")
 
-    def test_VTG(self):
+    def test_VTG(self) -> None:
         self.nm.parse("$GNVTG,122.7,T,,M,015.1,N,000.0,K,A*10")
         print(self.nm.fields)
         with self.subTest():
@@ -161,7 +161,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual(15.1, self.nm.course, f"Course incorrect.")
 
-    def test_ZDA(self):
+    def test_ZDA(self) -> None:
         self.nm.parse("$GNZDA,215744.000,08,02,2025,00,00*46")
         print(self.nm.fields)
         with self.subTest():
@@ -169,7 +169,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("080225", self.nm.date, f"Date incorrect.")
 
-    def test_THS(self):
+    def test_THS(self) -> None:
         self.nm.parse("$GNTHS,121.15,A*1F")
         print(self.nm.fields)
         with self.subTest():
@@ -177,7 +177,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual(121.15, self.nm.heading, f"Heading incorrect.")
 
-    def test_sti_005(self):
+    def test_sti_005(self) -> None:
         self.nm.parse("$PSTI,005,121959.0000003,20,07,2020,,,,,*34")
         print(self.nm.fields)
         with self.subTest():
@@ -185,7 +185,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("200720", self.nm.date, f"Date incorrect.")
 
-    def test_sti_030(self):
+    def test_sti_030(self) -> None:
         self.nm.parse("$PSTI,030,033010.000,A,2447.0895508,N,12100.5234656,E,"
                       "94.615,0.00,-0.01,0.04,111219,R,0.999,3.724*1A")
         print(self.nm.fields)
@@ -209,29 +209,29 @@ class BasicMicroNMEA(unittest.TestCase):
 
 class UnitsISO8601MicroNMEA(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.nm = microNMEA.MicroNMEA(2)
         print("\n".ljust(90, "-"))
         print(f"Start {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
         print("".ljust(90, "-"))
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         print(self.nm)
         print("Stop Test".ljust(90, "-"))
 
-    def test_speed_kmh_VTG(self):
+    def test_speed_kmh_VTG(self) -> None:
         self.nm.parse("$GNVTG,122.7,T,,M,015.1,N,000.0,K,A*10")
         print(self.nm.fields)
         with self.subTest():
             self.assertEqual(227.24, self.nm.speed, f"Speed incorrect.")
 
-    def test_date_YYYYMMDD_RMC(self):
+    def test_date_YYYYMMDD_RMC(self) -> None:
         self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,V*04")
         print(self.nm.fields)
         with self.subTest():
             self.assertEqual("2025-02-08", self.nm.date, f"Date incorrect.")
 
-    def test_date_YYYYMMDD_sti_005(self):
+    def test_date_YYYYMMDD_sti_005(self) -> None:
         self.nm.parse("$PSTI,005,121959.0000003,20,07,2020,,,,,*34")
         print(self.nm.fields)
         with self.subTest():
@@ -240,17 +240,17 @@ class UnitsISO8601MicroNMEA(unittest.TestCase):
 
 class FormatsMicroNMEA(unittest.TestCase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.nm = microNMEA.MicroNMEA(formats=1)
         print("\n".ljust(90, "-"))
         print(f"Start {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
         print("".ljust(90, "-"))
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         print(self.nm)
         print("Stop Test".ljust(90, "-"))
 
-    def test_coordinates_DD_GGA(self):
+    def test_coordinates_DD_GGA(self) -> None:
         self.nm.parse("$GPGGA,215230.000,5546.7965950,N,01125.3586740,E,1,19,0.7,225.278,M,36.900,M,,0000*5f")
         print(self.nm.fields)
         with self.subTest():
