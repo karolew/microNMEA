@@ -1,3 +1,86 @@
+class Precise:
+    """
+    A class for handling floating point calculations.
+    Works with string inputs and outputs.
+    Uses integer arithmetic for higher precision.
+    """
+
+    def __init__(self, decimal_places: int = 10) -> None:
+        self.decimal_places = decimal_places
+        self.multiplier = 10 ** self.decimal_places
+
+    def _ljust(self, data: str) -> str:
+        return f"{data:<{self.decimal_places}}".replace(" ", "0")
+
+    def _rjust(self, data: str) -> str:
+        return f"{data:>{self.decimal_places}}".replace(" ", "0")
+
+    def _to_fixed_point(self, value_str: str) -> float:
+        """
+        Convert a string to a fixed-point integer representation.
+        """
+        try:
+            # Split by decimal point.
+            if '.' in value_str:
+                whole_part, decimal_part = value_str.split('.')
+                # Pad decimal part to our precision.
+                decimal_part = self._ljust(decimal_part)[:self.decimal_places]
+                # Convert to our internal integer representation.
+                return int(whole_part) * self.multiplier + int(self._ljust(decimal_part)[:self.decimal_places])
+            else:
+                return int(value_str) * self.multiplier
+        except ValueError:
+            raise ValueError(f"Invalid number format: {value_str}")
+
+    def _to_string(self, fixed_point_value: float) -> str:
+        """
+        Convert a fixed-point integer to a string with proper decimal places.
+        """
+        whole_part = fixed_point_value // self.multiplier
+        decimal_part = abs(fixed_point_value % self.multiplier)
+        sign = "-" if fixed_point_value < 0 and not (whole_part < 0) else ""
+
+        # Format with leading zeros in decimal part.
+        decimal_str = self._rjust(decimal_part)
+
+        # Combine parts.
+        result = f"{sign}{abs(whole_part)}.{decimal_str}"
+
+        # Remove trailing zeros but keep one zero after decimal point if needed.
+        if '.' in result:
+            result = result.rstrip('0').rstrip('.') if (result.rstrip('0') != result.rstrip('0').
+                                                        rstrip('.')) else result.rstrip('0')
+        return result
+
+    def add(self, a: str, b: str) -> str:
+        fixed_a = self._to_fixed_point(a)
+        fixed_b = self._to_fixed_point(b)
+        result = fixed_a + fixed_b
+        return self._to_string(result)
+
+    def subtract(self, a: str, b: str) -> str:
+        fixed_a = self._to_fixed_point(a)
+        fixed_b = self._to_fixed_point(b)
+        result = fixed_a - fixed_b
+        return self._to_string(result)
+
+    def multiply(self, a: str, b: str) -> str:
+        fixed_a = self._to_fixed_point(a)
+        fixed_b = self._to_fixed_point(b)
+        # When multiplying, we need to divide by the multiplier to maintain precision.
+        result = (fixed_a * fixed_b) // self.multiplier
+        return self._to_string(result)
+
+    def divide(self, a: str, b: str) -> str:
+        fixed_a = self._to_fixed_point(a)
+        fixed_b = self._to_fixed_point(b)
+        if fixed_b == 0:
+            raise ZeroDivisionError("Division by zero")
+
+        # When dividing, we need to multiply by the multiplier to maintain precision.
+        result = (fixed_a * self.multiplier) // fixed_b
+        return self._to_string(result)
+
 
 class MicroNMEA:
 
@@ -75,6 +158,7 @@ class MicroNMEA:
     SPEED_KNOTS_2_KMH = 1.852
 
     def __init__(self, units: int = 1, formats: int = 2, crc: bool = True) -> None:
+        self.precise = Precise()
         self.units = units
         self.formats = formats
         self.crc = crc
@@ -144,7 +228,7 @@ class MicroNMEA:
         crc = 0
         for __char in message[1:]:
             crc ^= ord(__char)
-        return ("0x%0.2X" % crc).lower()[2:] == expected_crc.lower()
+        return f"0x{crc:02x}".lower()[2:] == expected_crc.lower()
 
     def get_lat(self, lat: str, lns: str) -> None:
         if lat and lns and lns in self.HEMISPHERES:
@@ -154,10 +238,10 @@ class MicroNMEA:
                 self.lat_ns = lns
             # dd
             elif self.formats == 2:
-                la_deg = int(lat[:2])
-                la_minutes = float(lat[2:])
-                decimal_degrees = la_deg + (la_minutes / 60)
-                self.lat = round(decimal_degrees, 8) * (-1 if lns.lower() == "s" else 1)
+                la_deg = lat[:2]
+                la_minutes = lat[2:]
+                decimal_degrees = self.precise.add(la_deg, self.precise.divide(la_minutes, "60"))
+                self.lat = f"{'-' if lns.lower() == 's' else ''}{decimal_degrees}"
                 self.lat_ns = lns
 
     def get_lon(self, lon: str, lew: str) -> None:
@@ -168,10 +252,10 @@ class MicroNMEA:
                 self.lon_ew = lew
             # dd
             elif self.formats == 2:
-                lo_deg = int(lon[:3])
-                lo_minutes = float(lon[3:])
-                decimal_degrees = lo_deg + (lo_minutes / 60)
-                self.lon = round(decimal_degrees, 8) * (-1 if lew.lower() == "w" else 1)
+                lo_deg = lon[:3]
+                lo_minutes = lon[3:]
+                decimal_degrees = self.precise.add(lo_deg, self.precise.divide(lo_minutes, "60"))
+                self.lon = f"{'-' if lew.lower() == 's' else ''}{decimal_degrees}"
                 self.lon_ew = lew
 
     def get_quality(self, field: str) -> None:

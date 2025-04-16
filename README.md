@@ -7,6 +7,11 @@ The following documents were used as a source of NMEA information:
 * https://navspark.mybigcommerce.com/content/PX1122R_DS.pdf
 * https://aprs.gids.nl/nmea/#latlong
 
+This library provides NMEA decoder (`MicroNMEA` class) and a 
+tool for working with numbers with increased precision (by 
+default 10 decimal places) which makes it possible to process 
+RTK precision data (`Precise` class).
+
 # Usage
 
 * Copy the `MicroNMEA.py` to your project.
