@@ -378,23 +378,23 @@ class MicroNMEA:
         if field:
             self.rtk_ratio = float(field)
 
-    def get_east_pob(self, field):
+    def get_east_pob(self, field) -> None:
         if field:
             self.east_pob = float(field)
 
-    def get_north_pob(self, field):
+    def get_north_pob(self, field) -> None:
         if field:
             self.north_pob = float(field)
 
-    def get_up_pob(self, field):
+    def get_up_pob(self, field) -> None:
         if field:
             self.up_pob = float(field)
 
-    def get_baseline_length(self, field):
+    def get_baseline_length(self, field) -> None:
         if field:
             self.baseline_length = float(field)
 
-    def get_baseline_course(self, field):
+    def get_baseline_course(self, field) -> None:
         if field:
             self.baseline_course = float(field)
 
@@ -507,7 +507,7 @@ class MicroNMEA:
             self.get_heading(self.fields[1])
             self.get_heading_mode(self.fields[2])
 
-    def sti(self):
+    def sti(self) -> None:
         """
         STI 005 Time Stamp Output
         STI 030 Recommended Minimum 3D GNSS Data
