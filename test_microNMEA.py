@@ -22,9 +22,9 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("215230.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
-            self.assertEqual(55.77994325, self.nm.lat, f"Latitude incorrect.")
+            self.assertEqual("55.77994325", self.nm.lat, f"Latitude incorrect.")
         with self.subTest():
-            self.assertEqual(11.42264457, self.nm.lon, f"Longitude incorrect.")
+            self.assertEqual("11.4226445666", self.nm.lon, f"Longitude incorrect.")
         with self.subTest():
             self.assertEqual(225.278, self.nm.alt, f"Altitude incorrect.")
         with self.subTest():
@@ -48,9 +48,9 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("215230.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
-            self.assertEqual(55.77994325, self.nm.lat, f"Latitude incorrect.")
+            self.assertEqual("55.77994325", self.nm.lat, f"Latitude incorrect.")
         with self.subTest():
-            self.assertEqual(11.42264457, self.nm.lon, f"Longitude incorrect.")
+            self.assertEqual("11.4226445666", self.nm.lon, f"Longitude incorrect.")
         with self.subTest():
             self.assertEqual("Autonomous Mode", self.nm.mode, f"Mode incorrect.")
 
@@ -143,9 +143,9 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("Autonomous Mode", self.nm.mode, f"Mode incorrect.")
         with self.subTest():
-            self.assertEqual(55.77982217, self.nm.lat, f"Latitude incorrect.")
+            self.assertEqual("55.7798221666", self.nm.lat, f"Latitude incorrect.")
         with self.subTest():
-            self.assertEqual(11.42262783, self.nm.lon, f"Longitude incorrect.")
+            self.assertEqual("11.4226278316", self.nm.lon, f"Longitude incorrect.")
         with self.subTest():
             self.assertEqual(0, self.nm.speed, f"Speed incorrect.")
         with self.subTest():
@@ -196,9 +196,9 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("RTK Fix", self.nm.mode, f"Mode incorrect.")
         with self.subTest():
-            self.assertEqual(24.78482585, self.nm.lat, f"Latitude incorrect.")
+            self.assertEqual("24.7848258466", self.nm.lat, f"Latitude incorrect.")
         with self.subTest():
-            self.assertEqual(121.00872443, self.nm.lon, f"Longitude incorrect.")
+            self.assertEqual("121.0087244266", self.nm.lon, f"Longitude incorrect.")
         with self.subTest():
             self.assertEqual(94.615, self.nm.alt, f"Altitude incorrect.")
         with self.subTest():

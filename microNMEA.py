@@ -5,10 +5,14 @@ class Precise:
     Uses integer arithmetic for higher precision.
     """
 
-    def __init__(self, value_str: str, decimal_places: int = 10) -> None:
-        self.decimal_places = decimal_places
-        self.multiplier = 10 ** self.decimal_places
+    decimal_places = 10
+    multiplier = 10 ** decimal_places
+
+    def __init__(self, value_str: str) -> None:
         self.value_str = value_str
+        self.parts = self.value_str.split('.')
+        self.whole_part_with_sign = self.parts[0]
+        self.decimal_part = self._ljust(self.parts[1]) if len(self.parts) == 2 else self._ljust("0")
 
     def _ljust(self, data: str) -> str:
         return f"{data:<{self.decimal_places}}".replace(" ", "0")
@@ -57,28 +61,36 @@ class Precise:
                                                         rstrip('.')) else result.rstrip('0')
         return result
 
+    def _get_parameter(self, b):
+        if isinstance(b, Precise):
+            return self._to_fixed_point(b.value_str)
+        elif isinstance(b, str):
+            return self._to_fixed_point(b)
+        else:
+            raise TypeError("Incorrect attribute type. Must be str od Precise.")
+
     def __add__(self, b) -> str:
         fixed_a = self._to_fixed_point(self.value_str)
-        fixed_b = self._to_fixed_point(b.value_str)
+        fixed_b = self._get_parameter(b)
         result = fixed_a + fixed_b
         return self._to_string(result)
 
     def __sub__(self, b) -> str:
         fixed_a = self._to_fixed_point(self.value_str)
-        fixed_b = self._to_fixed_point(b.value_str)
+        fixed_b = self._get_parameter(b)
         result = fixed_a - fixed_b
         return self._to_string(result)
 
     def __mul__(self, b) -> str:
         fixed_a = self._to_fixed_point(self.value_str)
-        fixed_b = self._to_fixed_point(b.value_str)
+        fixed_b = self._get_parameter(b)
         # When multiplying, we need to divide by the multiplier to maintain precision.
         result = (fixed_a * fixed_b) // self.multiplier
         return self._to_string(result)
 
     def __truediv__(self, b) -> str:
         fixed_a = self._to_fixed_point(self.value_str)
-        fixed_b = self._to_fixed_point(b.value_str)
+        fixed_b = self._get_parameter(b)
         if fixed_b == 0:
             raise ZeroDivisionError("Division by zero")
         # When dividing, we need to multiply by the multiplier to maintain precision.
@@ -162,7 +174,6 @@ class MicroNMEA:
     SPEED_KNOTS_2_KMH = 1.852
 
     def __init__(self, units: int = 1, formats: int = 2, crc: bool = True) -> None:
-        self.precise = Precise()
         self.units = units
         self.formats = formats
         self.crc = crc
@@ -244,7 +255,7 @@ class MicroNMEA:
             elif self.formats == 2:
                 la_deg = lat[:2]
                 la_minutes = lat[2:]
-                decimal_degrees = self.precise.add(la_deg, self.precise.divide(la_minutes, "60"))
+                decimal_degrees = Precise(la_deg) + (Precise(la_minutes) / "60")
                 self.lat = f"{'-' if lns.lower() == 's' else ''}{decimal_degrees}"
                 self.lat_ns = lns
 
@@ -258,7 +269,7 @@ class MicroNMEA:
             elif self.formats == 2:
                 lo_deg = lon[:3]
                 lo_minutes = lon[3:]
-                decimal_degrees = self.precise.add(lo_deg, self.precise.divide(lo_minutes, "60"))
+                decimal_degrees = Precise(lo_deg) + (Precise(lo_minutes) / "60")
                 self.lon = f"{'-' if lew.lower() == 's' else ''}{decimal_degrees}"
                 self.lon_ew = lew
 
