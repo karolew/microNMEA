@@ -5,9 +5,10 @@ class Precise:
     Uses integer arithmetic for higher precision.
     """
 
-    def __init__(self, decimal_places: int = 10) -> None:
+    def __init__(self, value_str: str, decimal_places: int = 10) -> None:
         self.decimal_places = decimal_places
         self.multiplier = 10 ** self.decimal_places
+        self.value_str = value_str
 
     def _ljust(self, data: str) -> str:
         return f"{data:<{self.decimal_places}}".replace(" ", "0")
@@ -21,14 +22,18 @@ class Precise:
         """
         try:
             # Split by decimal point.
+            sign = 1
+            if value_str[0] == "-":
+                sign = -1
+                value_str = value_str[1:]
             if '.' in value_str:
                 whole_part, decimal_part = value_str.split('.')
                 # Pad decimal part to our precision.
                 decimal_part = self._ljust(decimal_part)[:self.decimal_places]
                 # Convert to our internal integer representation.
-                return int(whole_part) * self.multiplier + int(self._ljust(decimal_part)[:self.decimal_places])
+                return sign * (int(whole_part) * self.multiplier + int(self._ljust(decimal_part)[:self.decimal_places]))
             else:
-                return int(value_str) * self.multiplier
+                return sign * int(value_str) * self.multiplier
         except ValueError:
             raise ValueError(f"Invalid number format: {value_str}")
 
@@ -36,9 +41,9 @@ class Precise:
         """
         Convert a fixed-point integer to a string with proper decimal places.
         """
-        whole_part = fixed_point_value // self.multiplier
-        decimal_part = abs(fixed_point_value % self.multiplier)
-        sign = "-" if fixed_point_value < 0 and not (whole_part < 0) else ""
+        sign = "-" if fixed_point_value < 0 else ""
+        whole_part = int(fixed_point_value / self.multiplier)
+        decimal_part = abs(fixed_point_value) % self.multiplier
 
         # Format with leading zeros in decimal part.
         decimal_str = self._rjust(decimal_part)
@@ -52,33 +57,32 @@ class Precise:
                                                         rstrip('.')) else result.rstrip('0')
         return result
 
-    def add(self, a: str, b: str) -> str:
-        fixed_a = self._to_fixed_point(a)
-        fixed_b = self._to_fixed_point(b)
+    def __add__(self, b) -> str:
+        fixed_a = self._to_fixed_point(self.value_str)
+        fixed_b = self._to_fixed_point(b.value_str)
         result = fixed_a + fixed_b
         return self._to_string(result)
 
-    def subtract(self, a: str, b: str) -> str:
-        fixed_a = self._to_fixed_point(a)
-        fixed_b = self._to_fixed_point(b)
+    def __sub__(self, b) -> str:
+        fixed_a = self._to_fixed_point(self.value_str)
+        fixed_b = self._to_fixed_point(b.value_str)
         result = fixed_a - fixed_b
         return self._to_string(result)
 
-    def multiply(self, a: str, b: str) -> str:
-        fixed_a = self._to_fixed_point(a)
-        fixed_b = self._to_fixed_point(b)
+    def __mul__(self, b) -> str:
+        fixed_a = self._to_fixed_point(self.value_str)
+        fixed_b = self._to_fixed_point(b.value_str)
         # When multiplying, we need to divide by the multiplier to maintain precision.
         result = (fixed_a * fixed_b) // self.multiplier
         return self._to_string(result)
 
-    def divide(self, a: str, b: str) -> str:
-        fixed_a = self._to_fixed_point(a)
-        fixed_b = self._to_fixed_point(b)
+    def __truediv__(self, b) -> str:
+        fixed_a = self._to_fixed_point(self.value_str)
+        fixed_b = self._to_fixed_point(b.value_str)
         if fixed_b == 0:
             raise ZeroDivisionError("Division by zero")
-
         # When dividing, we need to multiply by the multiplier to maintain precision.
-        result = (fixed_a * self.multiplier) // fixed_b
+        result = int((fixed_a * self.multiplier) / fixed_b)
         return self._to_string(result)
 
 
