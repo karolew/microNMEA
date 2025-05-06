@@ -259,6 +259,89 @@ class FormatsMicroNMEA(unittest.TestCase):
             self.assertEqual("01125.3586740", self.nm.lon, f"Longitude incorrect.")
 
 
+class Precise(unittest.TestCase):
+
+    def setUp(self) -> None:
+        print("\n".ljust(90, "-"))
+        print(f"Start {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
+        print("".ljust(90, "-"))
+
+    def tearDown(self) -> None:
+        print("Stop Test".ljust(90, "-"))
+
+    def test_precise_addition(self) -> None:
+        self.assertEqual("2", microNMEA.Precise("1") + microNMEA.Precise("1"),
+                         f"Add integers")
+        self.assertEqual("2", microNMEA.Precise("1") + "1",
+                         f"Add integers")
+        self.assertEqual("3.123456789", microNMEA.Precise("2.123456789") + microNMEA.Precise("1"),
+                         f"Add float to integer")
+        self.assertEqual("3.123456789", microNMEA.Precise("2.123456789") + "1",
+                         f"Add float to integer")
+        self.assertEqual("3.12345679", microNMEA.Precise("2.123456789") + microNMEA.Precise("1.000000001"),
+                         f"Add floats")
+        self.assertEqual("3.12345679", microNMEA.Precise("2.123456789") + "1.000000001",
+                         f"Add floats")
+
+    def test_precise_subtraction(self) -> None:
+        self.assertEqual("1", microNMEA.Precise("123456789") - microNMEA.Precise("123456788"),
+                         f"Subtract integers")
+        self.assertEqual("123456788", microNMEA.Precise("123456789") - "1",
+                         f"Subtract integers")
+        self.assertEqual("1.123456789", microNMEA.Precise("2.123456789") - microNMEA.Precise("1"),
+                         f"Subtract integer from float")
+        self.assertEqual("0.123456789", microNMEA.Precise("2.123456789") - "2",
+                         f"Subtract integer from float")
+        self.assertEqual("0.000000001", microNMEA.Precise("2.123456789") - microNMEA.Precise("2.123456788"),
+                         f"Subtract floats")
+        self.assertEqual("1.123456788", microNMEA.Precise("2.123456789") - "1.000000001",
+                         f"Subtract floats")
+
+    def test_precise_multiplication(self) -> None:
+        self.assertEqual("49", microNMEA.Precise("7") * microNMEA.Precise("7"),
+                         f"Multiple integers")
+        self.assertEqual("50038", microNMEA.Precise("394") * "127",
+                         f"Multiple integers")
+        self.assertEqual("2.246913578", microNMEA.Precise("1.123456789") * microNMEA.Precise("2"),
+                         f"Multiple float and integer")
+        self.assertEqual("142.679012203", microNMEA.Precise("1.123456789") * "127",
+                         f"Multiple float and integer")
+        self.assertEqual("1.2621551567", microNMEA.Precise("1.123456789") * microNMEA.Precise("1.123456789"),
+                         f"Multiple floats")
+        self.assertEqual("2.42", microNMEA.Precise("1.1") * "2.2",
+                         f"Multiple floats")
+
+    def test_precise_multiplication_signs(self) -> None:
+        self.assertEqual("-5.25", microNMEA.Precise("-1.5") * microNMEA.Precise("3.5"),
+                         f"Multiple floats first negative")
+        self.assertEqual("-5.25", microNMEA.Precise("1.5") * microNMEA.Precise("-3.5"),
+                         f"Multiple floats second negative")
+        self.assertEqual("5.25", microNMEA.Precise("-1.5") * microNMEA.Precise("-3.5"),
+                         f"Multiple floats both negative")
+
+    def test_precise_division(self) -> None:
+        self.assertEqual("2.5", microNMEA.Precise("5") / microNMEA.Precise("2"),
+                         f"Divide integers")
+        self.assertEqual("2.5", microNMEA.Precise("5") / "2",
+                         f"Divide integers")
+        self.assertEqual("2.8", microNMEA.Precise("5.6") / microNMEA.Precise("2"),
+                         f"Divide float by integer")
+        self.assertEqual("2.8", microNMEA.Precise("5.6") / "2",
+                         f"Divide float by integer")
+        self.assertEqual("5", microNMEA.Precise("5.5") / microNMEA.Precise("1.1"),
+                         f"Divide floats")
+        self.assertEqual("1001", microNMEA.Precise("100.1") / "0.1",
+                         f"Divide floats")
+
+    def test_precise_division_signs(self) -> None:
+        self.assertEqual("-3", microNMEA.Precise("-7.5") / microNMEA.Precise("2.5"),
+                         f"Divide floats first negative")
+        self.assertEqual("-3", microNMEA.Precise("7.5") / microNMEA.Precise("-2.5"),
+                         f"Divide floats second negative")
+        self.assertEqual("3", microNMEA.Precise("-7.5") / microNMEA.Precise("-2.5"),
+                         f"Divide floats both negative")
+
+
 if __name__ == "__main__":
     unittest.main()
 
