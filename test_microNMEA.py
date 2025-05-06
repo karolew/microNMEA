@@ -283,6 +283,7 @@ class Precise(unittest.TestCase):
                          f"Add floats")
         self.assertEqual("3.12345679", microNMEA.Precise("2.123456789") + "1.000000001",
                          f"Add floats")
+        print("PASSED test addition")
 
     def test_precise_subtraction(self) -> None:
         self.assertEqual("1", microNMEA.Precise("123456789") - microNMEA.Precise("123456788"),
@@ -297,6 +298,7 @@ class Precise(unittest.TestCase):
                          f"Subtract floats")
         self.assertEqual("1.123456788", microNMEA.Precise("2.123456789") - "1.000000001",
                          f"Subtract floats")
+        print("PASSED test subtraction")
 
     def test_precise_multiplication(self) -> None:
         self.assertEqual("49", microNMEA.Precise("7") * microNMEA.Precise("7"),
@@ -311,6 +313,7 @@ class Precise(unittest.TestCase):
                          f"Multiple floats")
         self.assertEqual("2.42", microNMEA.Precise("1.1") * "2.2",
                          f"Multiple floats")
+        print("PASSED test multiplication")
 
     def test_precise_multiplication_signs(self) -> None:
         self.assertEqual("-5.25", microNMEA.Precise("-1.5") * microNMEA.Precise("3.5"),
@@ -319,6 +322,7 @@ class Precise(unittest.TestCase):
                          f"Multiple floats second negative")
         self.assertEqual("5.25", microNMEA.Precise("-1.5") * microNMEA.Precise("-3.5"),
                          f"Multiple floats both negative")
+        print("PASSED test multiplication with sign")
 
     def test_precise_division(self) -> None:
         self.assertEqual("2.5", microNMEA.Precise("5") / microNMEA.Precise("2"),
@@ -333,6 +337,7 @@ class Precise(unittest.TestCase):
                          f"Divide floats")
         self.assertEqual("1001", microNMEA.Precise("100.1") / "0.1",
                          f"Divide floats")
+        print("PASSED test division")
 
     def test_precise_division_signs(self) -> None:
         self.assertEqual("-3", microNMEA.Precise("-7.5") / microNMEA.Precise("2.5"),
@@ -341,6 +346,7 @@ class Precise(unittest.TestCase):
                          f"Divide floats second negative")
         self.assertEqual("3", microNMEA.Precise("-7.5") / microNMEA.Precise("-2.5"),
                          f"Divide floats both negative")
+        print("PASSED test division with sign")
 
 
 class RandomPrecise(unittest.TestCase):
@@ -355,7 +361,7 @@ class RandomPrecise(unittest.TestCase):
         print("Stop Test".ljust(90, "-"))
 
     def test_random_precise_multiplication(self) -> None:
-        print("Test integer multiplication")
+        print("Test random integer multiplication")
         max_value = 100000
         iterations = 1000
         for iteration in range(1, iterations + 1):
@@ -365,9 +371,9 @@ class RandomPrecise(unittest.TestCase):
                 result = microNMEA.Precise(str(multiplicative)) * str(multiplier)
                 self.assertEqual(str(multiplicative * multiplier), result,
                                  f"FAILED test {iteration}, multiple integers {multiplicative} by {multiplier}")
-                print(f"PASSED test {iteration}, multiple integers {multiplicative} * {multiplier} = {result}")
+                print(f"PASSED test {iteration}, multiple random integers {multiplicative} * {multiplier} = {result}")
 
-        print("Test float multiplication")
+        print("Test random float multiplication")
         max_value = 10
         iterations = 1000
         decrease_precision_places = 2
@@ -379,7 +385,7 @@ class RandomPrecise(unittest.TestCase):
                 self.assertAlmostEqual(multiplicative * multiplier, float(result),
                                        microNMEA.Precise.decimal_places-decrease_precision_places,
                                        f"FAILED test {iteration}, multiple floats {multiplicative} by {multiplier}")
-                print(f"PASSED test {iteration}, multiple floats {multiplicative} * {multiplier} = {result}")
+                print(f"PASSED test {iteration}, multiple random floats {multiplicative} * {multiplier} = {result}")
 
 
 if __name__ == "__main__":
