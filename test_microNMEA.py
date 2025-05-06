@@ -1,4 +1,5 @@
 import datetime
+import random
 import unittest
 
 import microNMEA
@@ -342,7 +343,44 @@ class Precise(unittest.TestCase):
                          f"Divide floats both negative")
 
 
+class RandomPrecise(unittest.TestCase):
+    import random
+
+    def setUp(self) -> None:
+        print("\n".ljust(90, "-"))
+        print(f"Start {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
+        print("".ljust(90, "-"))
+
+    def tearDown(self) -> None:
+        print("Stop Test".ljust(90, "-"))
+
+    def test_random_precise_multiplication(self) -> None:
+        print("Test integer multiplication")
+        max_value = 100000
+        iterations = 1000
+        for iteration in range(1, iterations + 1):
+            multiplicative = random.randint(-max_value, max_value)
+            multiplier = random.randint(-max_value, max_value)
+            with self.subTest(iteration):
+                result = microNMEA.Precise(str(multiplicative)) * str(multiplier)
+                self.assertEqual(str(multiplicative * multiplier), result,
+                                 f"FAILED test {iteration}, multiple integers {multiplicative} by {multiplier}")
+                print(f"PASSED test {iteration}, multiple integers {multiplicative} * {multiplier} = {result}")
+
+        print("Test float multiplication")
+        max_value = 10
+        iterations = 1000
+        decrease_precision_places = 2
+        for iteration in range(1, iterations + 1):
+            multiplicative = random.uniform(-max_value, max_value)
+            multiplier = random.uniform(-max_value, max_value)
+            with self.subTest(iteration):
+                result = microNMEA.Precise(str(multiplicative)) * str(multiplier)
+                self.assertAlmostEqual(multiplicative * multiplier, float(result),
+                                       microNMEA.Precise.decimal_places-decrease_precision_places,
+                                       f"FAILED test {iteration}, multiple floats {multiplicative} by {multiplier}")
+                print(f"PASSED test {iteration}, multiple floats {multiplicative} * {multiplier} = {result}")
+
+
 if __name__ == "__main__":
     unittest.main()
-
-
