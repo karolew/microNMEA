@@ -135,7 +135,7 @@ class BasicMicroNMEA(unittest.TestCase):
             self.assertDictEqual(expected_satellite_data, self.nm.gsv_data, "Satellites map should be empty.")
 
     def test_RMC(self) -> None:
-        self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,V*04")
+        self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,S*01")
         print(self.nm.fields)
         with self.subTest():
             self.assertEqual("215744.000", self.nm.time, f"Time incorrect.")
@@ -151,6 +151,8 @@ class BasicMicroNMEA(unittest.TestCase):
             self.assertEqual(0, self.nm.speed, f"Speed incorrect.")
         with self.subTest():
             self.assertEqual(0, self.nm.course, f"Course incorrect.")
+        with self.subTest():
+            self.assertEqual("Safe", self.nm.nav_status, f"Nav status incorrect.")
 
     def test_VTG(self) -> None:
         self.nm.parse("$GNVTG,122.7,T,,M,015.1,N,000.0,K,A*10")
@@ -227,7 +229,7 @@ class UnitsISO8601MicroNMEA(unittest.TestCase):
             self.assertEqual(227.24, self.nm.speed, f"Speed incorrect.")
 
     def test_date_YYYYMMDD_RMC(self) -> None:
-        self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,V*04")
+        self.nm.parse("$GNRMC,215744.000,A,5546.7893300,N,01125.3576699,E,000.0,000.0,080225,,,A,S*01")
         print(self.nm.fields)
         with self.subTest():
             self.assertEqual("2025-02-08", self.nm.date, f"Date incorrect.")

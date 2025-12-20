@@ -125,6 +125,13 @@ class MicroNMEA:
         "P": "Precise"
     }
 
+    NAV_STATUS = {
+        "S": "Safe",
+        "C": "Caution",
+        "U": "Unsafe",
+        "V": "Not Valid"
+    }
+
     GNSS_IDS = {
         1: {"system": "GPS", "talker": "GP", "signals": {
                                                          "0": "All signals",
@@ -211,6 +218,7 @@ class MicroNMEA:
         self.up_pob = None
         self.baseline_length = None
         self.baseline_course = None
+        self.nav_status = None
 
     def parse(self, raw_sentence: str) -> None:
         try:
@@ -330,6 +338,13 @@ class MicroNMEA:
                 yy = field[4:]
                 self.date = f"{2000 + int(yy)}-{mm}-{dd}"
 
+    def get_date_2(self, day: str, month: str, year: str) -> None:
+        if day and month and year:
+            if self.units == 1:
+                self.date = f"{day}{month}{year[2:]}"
+            elif self.units == 2:
+                self.date = f"{year}-{month}-{day}"
+
     def get_elevation(self, field: str) -> int:
         if field and int(field) in range(0, 90 + 1):
             return int(field)
@@ -361,13 +376,6 @@ class MicroNMEA:
     def get_course(self, field: str) -> None:
         if field:
             self.course = float(field)
-
-    def get_date_2(self, day: str, month: str, year: str) -> None:
-        if day and month and year:
-            if self.units == 1:
-                self.date = f"{day}{month}{year[2:]}"
-            elif self.units == 2:
-                self.date = f"{year}-{month}-{day}"
 
     def get_heading(self, field: str) -> None:
         if field:
@@ -413,30 +421,36 @@ class MicroNMEA:
         if field:
             self.baseline_course = float(field)
 
+    def get_nav_status(self, field) -> None:
+        if field and field in self.NAV_STATUS:
+            self.nav_status = self.NAV_STATUS.get(field)
+
     def gga(self) -> None:
         """
          Global positioning system fix data.
         """
-        self.get_time(self.fields[1])
-        self.get_lat(self.fields[2], self.fields[3])
-        self.get_lon(self.fields[4], self.fields[5])
         self.get_quality(self.fields[6])
-        self.get_satellites_used(self.fields[7])
-        self.get_hdop(self.fields[8])
-        self.get_alt(self.fields[9])
-        self.get_geoidal_separation(self.fields[11])
-        self.get_dgps_age(self.fields[13])
-        self.get_dgps_station_id(self.fields[14])
+        if self.quality != self.QUALITY[0]:
+            self.get_time(self.fields[1])
+            self.get_lat(self.fields[2], self.fields[3])
+            self.get_lon(self.fields[4], self.fields[5])
+            self.get_satellites_used(self.fields[7])
+            self.get_hdop(self.fields[8])
+            self.get_alt(self.fields[9])
+            self.get_geoidal_separation(self.fields[11])
+            self.get_dgps_age(self.fields[13])
+            self.get_dgps_station_id(self.fields[14])
 
     def gll(self) -> None:
         """
          Geographic position latitude and longitude.
         """
-        if self.fields[6] == self.VALID:
+        self.get_mode(self.fields[7])
+        if (self.fields[6] == self.VALID
+                and self.fields[7] != self.MODES["N"]):
             self.get_lat(self.fields[1], self.fields[2])
             self.get_lon(self.fields[3], self.fields[4])
             self.get_time(self.fields[5])
-            self.get_mode(self.fields[7])
 
     def gsa(self) -> None:
         """
@@ -489,23 +503,26 @@ class MicroNMEA:
         """
         Recommended minimum specific GNSS data
         """
-        if self.fields[2] == self.VALID:
+        self.get_mode(self.fields[12])
+        self.get_nav_status(self.fields[13])
+        if (self.fields[2] == self.VALID
+                and self.nav_status  not in [self.NAV_STATUS["V"], self.NAV_STATUS["U"]]
+                and self.mode != self.MODES["N"]):
             self.get_time(self.fields[1])
             self.get_lat(self.fields[3], self.fields[4])
             self.get_lon(self.fields[5], self.fields[6])
             self.get_speed(self.fields[7])
             self.get_course(self.fields[8])
             self.get_date(self.fields[9])
-            self.get_mode(self.fields[12])
 
     def vtg(self) -> None:
         """
         Course Over Ground and Ground Speed.
         """
+        self.get_mode(self.fields[9])
         if self.fields[9] != "N":
             self.get_speed(self.fields[1])
             self.get_course(self.fields[5])
-            self.get_mode(self.fields[9])
 
     def zda(self) -> None:
         """
@@ -518,9 +535,9 @@ class MicroNMEA:
         """
         True Heading and Status.
         """
+        self.get_heading_mode(self.fields[2])
         if self.fields[2] != "V":
             self.get_heading(self.fields[1])
-            self.get_heading_mode(self.fields[2])
 
     def sti(self) -> None:
         """
@@ -594,5 +611,6 @@ class MicroNMEA:
                 f"North-projection of baseline: {self.north_pob}\n"
                 f"Up-projection of baseline: {self.up_pob}\n"
                 f"Baseline length: {self.baseline_length}\n"
-                f"Baseline course: {self.baseline_course}"
+                f"Baseline course: {self.baseline_course}\n"
+                f"Navigation status: {self.nav_status}"
                 )

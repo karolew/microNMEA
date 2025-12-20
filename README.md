@@ -1,6 +1,6 @@
 # NMEA Micropython Parser
 
-It is lightweight micropython oriented implementation of NMEA-0183 V4.1 protocol. 
+It is lightweight micropython oriented implementation of <b> NMEA-0183 V4.1 </b> protocol. 
 
 The following documents were used as a source of NMEA information:
 * https://help.fieldsystems.trimble.com/sps/nmea0183-messages-vtg.htm
@@ -11,6 +11,21 @@ This library provides NMEA decoder (`MicroNMEA` class) and a
 tool for working with numbers with increased precision (by 
 default 10 decimal places) which makes it possible to process 
 RTK precision data (`Precise` class).
+
+Some messages are decoding only when the data or status is valid. 
+
+| Message   | Decoding Logic |
+|-----------|----------------|
+| `GSA`     | Always         |
+| `GSV`     | Always         |
+| `ZDA`     | Always         |
+| `STI,005` | Always         |
+| `GGA`     | Conditional    |
+| `RMC`     | Conditional    |
+| `VTG`     | Conditional    |
+| `STI,030` | Conditional    |
+| `STI,032` | Conditional    |
+| `STI,035` | Conditional    |
 
 # Usage
 
@@ -26,15 +41,15 @@ nmea.parse("$GNGSA,A,3,67,68,69,84,,,,,,,,,1.2,0.7,1.0,2*3B")
 ```
 ## Parameters
 
-* unit: 
-  * 1 - raw data (default). E.g. speed knots, date ddmmyy, time  hhmmss.sssssss.
-  * 2 - ISO 8601 standards. E.g. speed km/h, distance meters, date yyyy-mm-dd, time hh:mm:ss.
-* formats:
-  * 1 - raw formats of coordinates. E.g. Latitude dddmm.mmmmmmm, Longitude dddmm.mmmmmmm.
-  * 2 - Decimal Degrees formats of coordinates (default). E.g. Latitude (-90 to 90) and longitude (-180 to 180).
-* crc:
-  * True - calculate checksum for each sentence (default).
-  * False - skip checksum calculation.
+* `unit`: 
+  * `1` - raw data (default). E.g. speed knots, date ddmmyy, time  hhmmss.sssssss.
+  * `2` - ISO 8601 standards. E.g. speed km/h, distance meters, date yyyy-mm-dd, time hh:mm:ss.
+* `formats`:
+  * `1` - raw formats of coordinates. E.g. Latitude dddmm.mmmmmmm, Longitude dddmm.mmmmmmm.
+  * `2` - Decimal Degrees formats of coordinates (default). E.g. Latitude (-90 to 90) and longitude (-180 to 180).
+* `crc`:
+  * `True` - calculate checksum for each sentence (default).
+  * `False` - skip checksum calculation.
 
 # Available GNSS attributes
 
@@ -71,3 +86,4 @@ nmea.parse("$GNGSA,A,3,67,68,69,84,,,,,,,,,1.2,0.7,1.0,2*3B")
 | `up_pob`                    | Up-projection of baseline, meters                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `baseline_length`           | Baseline length, meters                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `baseline_course`           | Baseline course (angle between baseline vector and north direction), degrees                                                                                                                                                                                                                                                                                                                                                       |
+| `nav_status`                | Navigation status indicator (RMC message only): <br/> S = Safe <br/> C = Caution <br/> U = Unsafe <br/> V = Not Valid                                                                                                                                                                                                                                                                                                              |
