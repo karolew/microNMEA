@@ -1,29 +1,22 @@
-class Precise:
-    """
-    A class for handling floating point calculations.
-    Works with string inputs and outputs.
-    Uses integer arithmetic for higher precision.
-    """
+# TODO niewiem dlaczego zaimportowane Precise wyniki pokazuje jako str, kiedy PRecise jest w module to jako obiekty Precise. Do poprawy tez testy.
 
-    decimal_places = 10
-    multiplier = 10 ** decimal_places
+class Precise:
+    DECIMAL_PLACES = 10
+    multiplier = 10 ** DECIMAL_PLACES
 
     def __init__(self, value_str: str) -> None:
-        self.value_str = value_str
-        self.parts = self.value_str.split('.')
+        self.parts = value_str.split('.')
         self.whole_part_with_sign = self.parts[0]
         self.decimal_part = self._ljust(self.parts[1]) if len(self.parts) == 2 else self._ljust("0")
+        self.value_str = self.whole_part_with_sign + "." + self.decimal_part
 
     def _ljust(self, data: str) -> str:
-        return f"{data:<{self.decimal_places}}".replace(" ", "0")
+        return f"{data:<{self.DECIMAL_PLACES}}".replace(" ", "0")
 
     def _rjust(self, data: str) -> str:
-        return f"{data:>{self.decimal_places}}".replace(" ", "0")
+        return f"{data:>{self.DECIMAL_PLACES}}".replace(" ", "0")
 
     def _to_fixed_point(self, value_str: str) -> float:
-        """
-        Convert a string to a fixed-point integer representation.
-        """
         try:
             # Split by decimal point.
             sign = 1
@@ -33,28 +26,22 @@ class Precise:
             if '.' in value_str:
                 whole_part, decimal_part = value_str.split('.')
                 # Pad decimal part to our precision.
-                decimal_part = self._ljust(decimal_part)[:self.decimal_places]
+                decimal_part = self._ljust(decimal_part)[:self.DECIMAL_PLACES]
                 # Convert to our internal integer representation.
-                return sign * (int(whole_part) * self.multiplier + int(self._ljust(decimal_part)[:self.decimal_places]))
+                return sign * (int(whole_part) * self.multiplier + int(self._ljust(decimal_part)[:self.DECIMAL_PLACES]))
             else:
                 return sign * int(value_str) * self.multiplier
         except ValueError:
             raise ValueError(f"Invalid number format: {value_str}")
 
     def _to_string(self, fixed_point_value: float) -> str:
-        """
-        Convert a fixed-point integer to a string with proper decimal places.
-        """
         sign = "-" if fixed_point_value < 0 else ""
         whole_part = int(fixed_point_value / self.multiplier)
         decimal_part = abs(fixed_point_value) % self.multiplier
-
         # Format with leading zeros in decimal part.
         decimal_str = self._rjust(decimal_part)
-
         # Combine parts.
         result = f"{sign}{abs(whole_part)}.{decimal_str}"
-
         # Remove trailing zeros but keep one zero after decimal point if needed.
         if '.' in result:
             result = result.rstrip('0').rstrip('.') if (result.rstrip('0') != result.rstrip('0').
@@ -67,35 +54,218 @@ class Precise:
         elif isinstance(b, str):
             return self._to_fixed_point(b)
         else:
-            raise TypeError("Incorrect attribute type. Must be str od Precise.")
+            raise TypeError("Incorrect attribute type. Must be str or Precise.")
 
-    def __add__(self, b) -> str:
+    def __add__(self, b):
         fixed_a = self._to_fixed_point(self.value_str)
         fixed_b = self._get_parameter(b)
         result = fixed_a + fixed_b
-        return self._to_string(result)
+        return Precise(self._to_string(result))
 
-    def __sub__(self, b) -> str:
+    def __sub__(self, b):
         fixed_a = self._to_fixed_point(self.value_str)
         fixed_b = self._get_parameter(b)
         result = fixed_a - fixed_b
-        return self._to_string(result)
+        return Precise(self._to_string(result))
 
-    def __mul__(self, b) -> str:
+    def __mul__(self, b):
         fixed_a = self._to_fixed_point(self.value_str)
         fixed_b = self._get_parameter(b)
         # When multiplying, we need to divide by the multiplier to maintain precision.
         result = (fixed_a * fixed_b) // self.multiplier
-        return self._to_string(result)
+        return Precise(self._to_string(result))
 
-    def __truediv__(self, b) -> str:
+    def __truediv__(self, b):
         fixed_a = self._to_fixed_point(self.value_str)
         fixed_b = self._get_parameter(b)
         if fixed_b == 0:
             raise ZeroDivisionError("Division by zero")
         # When dividing, we need to multiply by the multiplier to maintain precision.
         result = int((fixed_a * self.multiplier) / fixed_b)
-        return self._to_string(result)
+        return Precise(self._to_string(result))
+
+    def __repr__(self):
+        return self.value_str
+
+    @classmethod
+    def radians(cls, dd: str):
+        if isinstance(dd, Precise):
+            _dd = dd.value_str
+        elif isinstance(dd, str):
+            _dd = dd
+        else:
+            raise TypeError("Incorrect attribute type. Must be str or Precise.")
+        return Precise("3.141592653589793") / Precise("180") * _dd
+
+    @classmethod
+    def atan2(cls, y, x):
+        if isinstance(y, str):
+            y = Precise(y)
+        if isinstance(x, str):
+            x = Precise(x)
+        y_fp = y._to_fixed_point(y.value_str) if isinstance(y, Precise) else 0
+        x_fp = x._to_fixed_point(x.value_str) if isinstance(x, Precise) else 0
+        if x_fp == 0 and y_fp == 0:
+            return Precise("0")
+        pi = Precise("3.141592653589793")
+        half_pi = Precise("1.5707963267948966")
+        if x_fp == 0:
+            if y_fp > 0:
+                return half_pi
+            else:
+                return Precise("-1.5707963267948966")
+        if y_fp == 0:
+            if x_fp > 0:
+                return Precise("0")
+            else:
+                return pi
+        atan_table = [
+            "0.7853981633974483",  # atan(2^0)
+            "0.4636476090008061",  # atan(2^-1)
+            "0.2449786631268641",  # atan(2^-2)
+            "0.1243549945467614",  # atan(2^-3)
+            "0.0624188099959574",  # atan(2^-4)
+            "0.0312398334302683",  # atan(2^-5)
+            "0.0156237286204768",  # atan(2^-6)
+            "0.0078123410601011",  # atan(2^-7)
+            "0.0039062301319670",  # atan(2^-8)
+            "0.0019531225164788",  # atan(2^-9)
+            "0.0009765621895593",  # atan(2^-10)
+            "0.0004882812111948",  # atan(2^-11)
+            "0.0002441406201493",  # atan(2^-12)
+            "0.0001220703118937",  # atan(2^-13)
+            "0.0000610351561742",  # atan(2^-14)
+            "0.0000305175781155",  # atan(2^-15)
+        ]
+        angle_offset = Precise("0")
+        if x_fp < 0:
+            if y_fp >= 0:
+                angle_offset = pi
+            else:
+                angle_offset = Precise("-3.141592653589793")
+            x_fp = -x_fp
+            y_fp = -y_fp
+        angle = Precise("0")
+        for i in range(16):
+            if y_fp < 0:
+                new_x = x_fp - (y_fp >> i)
+                new_y = y_fp + (x_fp >> i)
+                angle = angle - Precise(atan_table[i])
+            else:
+                new_x = x_fp + (y_fp >> i)
+                new_y = y_fp - (x_fp >> i)
+                angle = angle + Precise(atan_table[i])
+            x_fp = new_x
+            y_fp = new_y
+        return angle + angle_offset
+
+    @classmethod
+    def sqrt(cls, value):
+        if isinstance(value, str):
+            value = Precise(value)
+        value_fp = value._to_fixed_point(value.value_str) if isinstance(value, Precise) else 0
+        if value_fp < 0:
+            raise ValueError("Cannot compute square root of negative number")
+        if value_fp == 0:
+            return Precise("0")
+        if value_fp == cls.multiplier:  # sqrt(1) = 1
+            return Precise("1")
+        bit_length = value_fp.bit_length()
+        if value_fp >= cls.multiplier:
+            x = value_fp // 2
+        else:
+            x = value_fp
+        if x < cls.multiplier:
+            x = cls.multiplier
+        prev_x = 0
+        iteration = 0
+        max_iterations = 30
+        while iteration < max_iterations:
+            quotient = (value_fp * cls.multiplier) // x
+            x_new = (x + quotient) // 2
+            if abs(x_new - x) <= 1:
+                break
+            prev_x = x
+            x = x_new
+            iteration += 1
+        return Precise(value._to_string(x))
+
+    def __pow__(self, exponent):
+        if not isinstance(exponent, int):
+            raise TypeError("Exponent must be an integer")
+        if exponent == 0:
+            return Precise("1")
+        if exponent < 0:
+            result = self ** (-exponent)
+            return Precise("1") / result
+        result = Precise("1")
+        base = self
+        exp = exponent
+        while exp > 0:
+            if exp % 2 == 1:
+                result = result * base
+            base = base * base
+            exp = exp // 2
+        return result
+
+    @classmethod
+    def cos(cls, angle):
+        if isinstance(angle, str):
+            angle = Precise(angle)
+        angle_fp = angle._to_fixed_point(angle.value_str) if isinstance(angle, Precise) else 0
+        pi = Precise("3.141592653589793")
+        two_pi = Precise("6.283185307179586")
+        half_pi = Precise("1.5707963267948966")
+        pi_fp = pi._to_fixed_point(pi.value_str)
+        two_pi_fp = two_pi._to_fixed_point(two_pi.value_str)
+        half_pi_fp = half_pi._to_fixed_point(half_pi.value_str)
+        while angle_fp > pi_fp:
+            angle_fp -= two_pi_fp
+        while angle_fp < -pi_fp:
+            angle_fp += two_pi_fp
+        sign = 1
+        if angle_fp < 0:
+            angle_fp = -angle_fp
+        if angle_fp > half_pi_fp:
+            angle_fp = pi_fp - angle_fp
+            sign = -1
+        atan_table = [
+            "0.7853981633974483",
+            "0.4636476090008061",
+            "0.2449786631268641",
+            "0.1243549945467614",
+            "0.0624188099959574",
+            "0.0312398334302683",
+            "0.0156237286204768",
+            "0.0078123410601011",
+            "0.0039062301319670",
+            "0.0019531225164788",
+            "0.0009765621895593",
+            "0.0004882812111948",
+            "0.0002441406201493",
+            "0.0001220703118937",
+            "0.0000610351561742",
+            "0.0000305175781155",
+        ]
+        K_inv_fp = 6072529350
+        x = cls.multiplier
+        y = 0
+        z = angle_fp  # Remaining angle to rotate
+        for i in range(16):
+            atan_i_fp = Precise(atan_table[i])._to_fixed_point(atan_table[i])
+            if z >= 0:
+                new_x = x - (y >> i)
+                new_y = y + (x >> i)
+                z = z - atan_i_fp
+            else:
+                new_x = x + (y >> i)
+                new_y = y - (x >> i)
+                z = z + atan_i_fp
+            x = new_x
+            y = new_y
+        result = (x * K_inv_fp) // cls.multiplier
+        result = sign * result
+        return Precise(angle._to_string(result))
 
 
 class MicroNMEA:

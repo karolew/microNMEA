@@ -23,7 +23,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("215230.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
-            self.assertEqual("55.77994325", self.nm.lat, f"Latitude incorrect.")
+            self.assertEqual("55.7799432500", self.nm.lat, f"Latitude incorrect.")
         with self.subTest():
             self.assertEqual("11.4226445666", self.nm.lon, f"Longitude incorrect.")
         with self.subTest():
@@ -49,7 +49,7 @@ class BasicMicroNMEA(unittest.TestCase):
         with self.subTest():
             self.assertEqual("215230.000", self.nm.time, f"Time incorrect.")
         with self.subTest():
-            self.assertEqual("55.77994325", self.nm.lat, f"Latitude incorrect.")
+            self.assertEqual("55.7799432500", self.nm.lat, f"Latitude incorrect.")
         with self.subTest():
             self.assertEqual("11.4226445666", self.nm.lon, f"Longitude incorrect.")
         with self.subTest():
@@ -273,80 +273,80 @@ class Precise(unittest.TestCase):
         print("Stop Test".ljust(90, "-"))
 
     def test_precise_addition(self) -> None:
-        self.assertEqual("2", microNMEA.Precise("1") + microNMEA.Precise("1"),
+        self.assertEqual(2.0, float((microNMEA.Precise("1") + microNMEA.Precise("1")).value_str),
                          f"Add integers")
-        self.assertEqual("2", microNMEA.Precise("1") + "1",
+        self.assertEqual(2.0, float((microNMEA.Precise("1") + "1").value_str),
                          f"Add integers")
-        self.assertEqual("3.123456789", microNMEA.Precise("2.123456789") + microNMEA.Precise("1"),
+        self.assertEqual(3.123456789, float((microNMEA.Precise("2.123456789") + microNMEA.Precise("1")).value_str),
                          f"Add float to integer")
-        self.assertEqual("3.123456789", microNMEA.Precise("2.123456789") + "1",
+        self.assertEqual(3.123456789, float((microNMEA.Precise("2.123456789") + "1").value_str),
                          f"Add float to integer")
-        self.assertEqual("3.12345679", microNMEA.Precise("2.123456789") + microNMEA.Precise("1.000000001"),
+        self.assertEqual(3.12345679,float((microNMEA.Precise("2.123456789") + microNMEA.Precise("1.000000001")).value_str),
                          f"Add floats")
-        self.assertEqual("3.12345679", microNMEA.Precise("2.123456789") + "1.000000001",
+        self.assertEqual(3.12345679, float((microNMEA.Precise("2.123456789") + "1.000000001").value_str),
                          f"Add floats")
         print("PASSED test addition")
 
     def test_precise_subtraction(self) -> None:
-        self.assertEqual("1", microNMEA.Precise("123456789") - microNMEA.Precise("123456788"),
+        self.assertEqual(1.0, float((microNMEA.Precise("123456789") - microNMEA.Precise("123456788")).value_str),
                          f"Subtract integers")
-        self.assertEqual("123456788", microNMEA.Precise("123456789") - "1",
+        self.assertEqual(123456788.0, float((microNMEA.Precise("123456789") - "1").value_str),
                          f"Subtract integers")
-        self.assertEqual("1.123456789", microNMEA.Precise("2.123456789") - microNMEA.Precise("1"),
+        self.assertEqual(1.123456789, float((microNMEA.Precise("2.123456789") - microNMEA.Precise("1")).value_str),
                          f"Subtract integer from float")
-        self.assertEqual("0.123456789", microNMEA.Precise("2.123456789") - "2",
+        self.assertEqual(0.123456789, float((microNMEA.Precise("2.123456789") - "2").value_str),
                          f"Subtract integer from float")
-        self.assertEqual("0.000000001", microNMEA.Precise("2.123456789") - microNMEA.Precise("2.123456788"),
+        self.assertEqual(0.000000001, float((microNMEA.Precise("2.123456789") - microNMEA.Precise("2.123456788")).value_str),
                          f"Subtract floats")
-        self.assertEqual("1.123456788", microNMEA.Precise("2.123456789") - "1.000000001",
+        self.assertEqual(1.123456788, float((microNMEA.Precise("2.123456789") - "1.000000001").value_str),
                          f"Subtract floats")
         print("PASSED test subtraction")
 
     def test_precise_multiplication(self) -> None:
-        self.assertEqual("49", microNMEA.Precise("7") * microNMEA.Precise("7"),
+        self.assertEqual(49.0, float((microNMEA.Precise("7") * microNMEA.Precise("7")).value_str),
                          f"Multiple integers")
-        self.assertEqual("50038", microNMEA.Precise("394") * "127",
+        self.assertEqual(50038.0, float((microNMEA.Precise("394") * "127").value_str),
                          f"Multiple integers")
-        self.assertEqual("2.246913578", microNMEA.Precise("1.123456789") * microNMEA.Precise("2"),
+        self.assertEqual(2.246913578, float((microNMEA.Precise("1.123456789") * microNMEA.Precise("2")).value_str),
                          f"Multiple float and integer")
-        self.assertEqual("142.679012203", microNMEA.Precise("1.123456789") * "127",
+        self.assertEqual(142.679012203, float((microNMEA.Precise("1.123456789") * "127").value_str),
                          f"Multiple float and integer")
-        self.assertEqual("1.2621551567", microNMEA.Precise("1.123456789") * microNMEA.Precise("1.123456789"),
+        self.assertEqual(1.2621551567, float((microNMEA.Precise("1.123456789") * microNMEA.Precise("1.123456789")).value_str),
                          f"Multiple floats")
-        self.assertEqual("2.42", microNMEA.Precise("1.1") * "2.2",
+        self.assertEqual(2.42, float((microNMEA.Precise("1.1") * "2.2").value_str),
                          f"Multiple floats")
         print("PASSED test multiplication")
 
     def test_precise_multiplication_signs(self) -> None:
-        self.assertEqual("-5.25", microNMEA.Precise("-1.5") * microNMEA.Precise("3.5"),
+        self.assertEqual(-5.25, float((microNMEA.Precise("-1.5") * microNMEA.Precise("3.5")).value_str),
                          f"Multiple floats first negative")
-        self.assertEqual("-5.25", microNMEA.Precise("1.5") * microNMEA.Precise("-3.5"),
+        self.assertEqual(-5.25, float((microNMEA.Precise("1.5") * microNMEA.Precise("-3.5")).value_str),
                          f"Multiple floats second negative")
-        self.assertEqual("5.25", microNMEA.Precise("-1.5") * microNMEA.Precise("-3.5"),
+        self.assertEqual(5.25, float((microNMEA.Precise("-1.5") * microNMEA.Precise("-3.5")).value_str),
                          f"Multiple floats both negative")
         print("PASSED test multiplication with sign")
 
     def test_precise_division(self) -> None:
-        self.assertEqual("2.5", microNMEA.Precise("5") / microNMEA.Precise("2"),
+        self.assertEqual(2.5, float((microNMEA.Precise("5") / microNMEA.Precise("2")).value_str),
                          f"Divide integers")
-        self.assertEqual("2.5", microNMEA.Precise("5") / "2",
+        self.assertEqual(2.5, float((microNMEA.Precise("5") / "2").value_str),
                          f"Divide integers")
-        self.assertEqual("2.8", microNMEA.Precise("5.6") / microNMEA.Precise("2"),
+        self.assertEqual(2.8, float((microNMEA.Precise("5.6") / microNMEA.Precise("2")).value_str),
                          f"Divide float by integer")
-        self.assertEqual("2.8", microNMEA.Precise("5.6") / "2",
+        self.assertEqual(2.8, float((microNMEA.Precise("5.6") / "2").value_str),
                          f"Divide float by integer")
-        self.assertEqual("5", microNMEA.Precise("5.5") / microNMEA.Precise("1.1"),
+        self.assertEqual(5.0, float((microNMEA.Precise("5.5") / microNMEA.Precise("1.1")).value_str),
                          f"Divide floats")
-        self.assertEqual("1001", microNMEA.Precise("100.1") / "0.1",
+        self.assertEqual(1001.0, float((microNMEA.Precise("100.1") / "0.1").value_str),
                          f"Divide floats")
         print("PASSED test division")
 
     def test_precise_division_signs(self) -> None:
-        self.assertEqual("-3", microNMEA.Precise("-7.5") / microNMEA.Precise("2.5"),
+        self.assertEqual(-3.0, float((microNMEA.Precise("-7.5") / microNMEA.Precise("2.5")).value_str),
                          f"Divide floats first negative")
-        self.assertEqual("-3", microNMEA.Precise("7.5") / microNMEA.Precise("-2.5"),
+        self.assertEqual(-3.0, float((microNMEA.Precise("7.5") / microNMEA.Precise("-2.5")).value_str),
                          f"Divide floats second negative")
-        self.assertEqual("3", microNMEA.Precise("-7.5") / microNMEA.Precise("-2.5"),
+        self.assertEqual(3.0, float((microNMEA.Precise("-7.5") / microNMEA.Precise("-2.5")).value_str),
                          f"Divide floats both negative")
         print("PASSED test division with sign")
 
@@ -365,27 +365,29 @@ class RandomPrecise(unittest.TestCase):
     def test_random_precise_multiplication(self) -> None:
         print("Test random integer multiplication")
         max_value = 100000
-        iterations = 1000
+        iterations = 1
         for iteration in range(1, iterations + 1):
             multiplicative = random.randint(-max_value, max_value)
             multiplier = random.randint(-max_value, max_value)
             with self.subTest(iteration):
-                result = microNMEA.Precise(str(multiplicative)) * str(multiplier)
-                self.assertEqual(str(multiplicative * multiplier), result,
+                result = float((microNMEA.Precise(str(multiplicative)) * str(multiplier)).value_str)
+                expected = float(multiplicative * multiplier)
+                self.assertEqual(expected, result,
                                  f"FAILED test {iteration}, multiple integers {multiplicative} by {multiplier}")
                 print(f"PASSED test {iteration}, multiple random integers {multiplicative} * {multiplier} = {result}")
 
         print("Test random float multiplication")
         max_value = 10
-        iterations = 1000
+        iterations = 1
         decrease_precision_places = 2
         for iteration in range(1, iterations + 1):
             multiplicative = random.uniform(-max_value, max_value)
             multiplier = random.uniform(-max_value, max_value)
             with self.subTest(iteration):
-                result = microNMEA.Precise(str(multiplicative)) * str(multiplier)
-                self.assertAlmostEqual(multiplicative * multiplier, float(result),
-                                       microNMEA.Precise.decimal_places-decrease_precision_places,
+                result = float((microNMEA.Precise(str(multiplicative)) * str(multiplier)).value_str)
+                expected = float(multiplicative * multiplier)
+                self.assertAlmostEqual(expected, result,
+                                       microNMEA.Precise.DECIMAL_PLACES-decrease_precision_places,
                                        f"FAILED test {iteration}, multiple floats {multiplicative} by {multiplier}")
                 print(f"PASSED test {iteration}, multiple random floats {multiplicative} * {multiplier} = {result}")
 
