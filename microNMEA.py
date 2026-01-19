@@ -1,6 +1,5 @@
-# TODO niewiem dlaczego zaimportowane Precise wyniki pokazuje jako str, kiedy PRecise jest w module to jako obiekty Precise. Do poprawy tez testy.
-
 class Precise:
+
     DECIMAL_PLACES = 10
     multiplier = 10 ** DECIMAL_PLACES
 
@@ -170,14 +169,12 @@ class Precise:
             return Precise("0")
         if value_fp == cls.multiplier:  # sqrt(1) = 1
             return Precise("1")
-        bit_length = value_fp.bit_length()
         if value_fp >= cls.multiplier:
             x = value_fp // 2
         else:
             x = value_fp
         if x < cls.multiplier:
             x = cls.multiplier
-        prev_x = 0
         iteration = 0
         max_iterations = 30
         while iteration < max_iterations:
@@ -185,7 +182,6 @@ class Precise:
             x_new = (x + quotient) // 2
             if abs(x_new - x) <= 1:
                 break
-            prev_x = x
             x = x_new
             iteration += 1
         return Precise(value._to_string(x))
@@ -250,7 +246,7 @@ class Precise:
         K_inv_fp = 6072529350
         x = cls.multiplier
         y = 0
-        z = angle_fp  # Remaining angle to rotate
+        z = angle_fp  # Remaining angle to rotate.
         for i in range(16):
             atan_i_fp = Precise(atan_table[i])._to_fixed_point(atan_table[i])
             if z >= 0:

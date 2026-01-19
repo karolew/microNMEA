@@ -1,4 +1,5 @@
 import datetime
+import math
 import random
 import unittest
 
@@ -352,8 +353,7 @@ class Precise(unittest.TestCase):
 
 
 class RandomPrecise(unittest.TestCase):
-    import random
-
+    import randoma
     def setUp(self) -> None:
         print("\n".ljust(90, "-"))
         print(f"Start {self.id()} {datetime.datetime.today()}".ljust(90, "-"))
@@ -362,10 +362,10 @@ class RandomPrecise(unittest.TestCase):
     def tearDown(self) -> None:
         print("Stop Test".ljust(90, "-"))
 
-    def test_random_precise_multiplication(self) -> None:
+    def test_random_precise_multiplication_int(self) -> None:
         print("Test random integer multiplication")
         max_value = 100000
-        iterations = 1
+        iterations = 100
         for iteration in range(1, iterations + 1):
             multiplicative = random.randint(-max_value, max_value)
             multiplier = random.randint(-max_value, max_value)
@@ -374,11 +374,13 @@ class RandomPrecise(unittest.TestCase):
                 expected = float(multiplicative * multiplier)
                 self.assertEqual(expected, result,
                                  f"FAILED test {iteration}, multiple integers {multiplicative} by {multiplier}")
-                print(f"PASSED test {iteration}, multiple random integers {multiplicative} * {multiplier} = {result}")
+                print(f"PASSED test {iteration}, multiple random integers {multiplicative} * {multiplier} "
+                      f"= {result} expected {expected}")
 
+    def test_random_precise_multiplication_float(self) -> None:
         print("Test random float multiplication")
         max_value = 10
-        iterations = 1
+        iterations = 100
         decrease_precision_places = 2
         for iteration in range(1, iterations + 1):
             multiplicative = random.uniform(-max_value, max_value)
@@ -389,8 +391,51 @@ class RandomPrecise(unittest.TestCase):
                 self.assertAlmostEqual(expected, result,
                                        microNMEA.Precise.DECIMAL_PLACES-decrease_precision_places,
                                        f"FAILED test {iteration}, multiple floats {multiplicative} by {multiplier}")
-                print(f"PASSED test {iteration}, multiple random floats {multiplicative} * {multiplier} = {result}")
+                print(f"PASSED test {iteration}, multiple random floats {multiplicative} * {multiplier} "
+                      f"= {result}  expected {expected}")
 
+    def test_random_precise_cos(self) -> None:
+        decimal_places_precision = 3
+        print(f"Test random cos, {decimal_places_precision} decimal places precision")
+        max_value = 2
+        iterations = 100
+        for iteration in range(1, iterations + 1):
+            angle = random.uniform(-max_value, max_value)
+            with self.subTest(iteration):
+                result = float(microNMEA.Precise.cos(str(angle)).value_str)
+                expected = math.cos(angle)
+                self.assertAlmostEqual(expected, result, decimal_places_precision,
+                                       f"FAILED test {iteration}, cos({angle}) = {expected} but it is {result}")
+                print(f"PASSED test {iteration}, cos({angle}) = {result} expected {expected}")
+
+    def test_random_precise_atan2(self) -> None:
+        decimal_places_precision = 3
+        print(f"Test random atan2, {decimal_places_precision} decimal places precision")
+        max_value = 2
+        iterations = 100
+        for iteration in range(1, iterations + 1):
+            x = random.uniform(-max_value, max_value)
+            y = random.uniform(-max_value, max_value)
+            with self.subTest(iteration):
+                result = float(microNMEA.Precise.atan2(str(x), str(y)).value_str)
+                expected = math.atan2(x, y)
+                self.assertAlmostEqual(expected, result, decimal_places_precision,
+                                       f"FAILED test {iteration}, atan2({x}, {y}) = {expected} but it is {result}")
+                print(f"PASSED test {iteration}, atan2({x}, {y}) = {result} expected {expected}")
+
+    def test_random_precise_sqrt(self) -> None:
+        decimal_places_precision = 3
+        print(f"Test random sqrt, {decimal_places_precision} decimal places precision")
+        max_value = 10000
+        iterations = 100
+        for iteration in range(1, iterations + 1):
+            val = random.uniform(0, max_value)
+            with self.subTest(iteration):
+                result = float(microNMEA.Precise.sqrt(str(val)).value_str)
+                expected = math.sqrt(val)
+                self.assertAlmostEqual(expected, result, decimal_places_precision,
+                                       f"FAILED test {iteration}, sqrt({val}) = {expected} but it is {result}")
+                print(f"PASSED test {iteration}, sqrt({val}) = {result} expected {expected}")
 
 if __name__ == "__main__":
     unittest.main()
